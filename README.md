@@ -143,4 +143,4 @@ sf project retrieve start -x manifest/package.xml -o <org-alias>
 
 ## License
 
-Proprietary \- Internal Use Only
+MIT License \- See [LICENSE](LICENSE) for details.
