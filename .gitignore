@@ -1,0 +1,55 @@
+# Salesforce DX
+.sfdx/
+.sf/
+.localdevserver/
+
+# LWC Local Development
+.localdevserver/
+
+# Node
+node_modules/
+package-lock.json
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Test Coverage
+coverage/
+.nyc_output/
+
+# Build
+dist/
+build/
+tmp/
+temp/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Salesforce Metadata (generated/retrieved)
+deploy/
+retrieve/
+
+# Scratch Org Snapshots
+*.snapshot
+
+# User-specific settings
+~/Library/
+*.usersettings.json
+usersettings.json

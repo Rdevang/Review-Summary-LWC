@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>52.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>Intake Form Review Summary</masterLabel>
+    <description>Utility LWC to display Review and Summary for intake forms. Works on record pages and as custom LWC inside OmniStudio.</description>
+    <targets>
+        <target>lightning__RecordPage</target>
+        <target>lightning__AppPage</target>
+        <target>lightning__HomePage</target>
+        <target>lightningCommunity__Page</target>
+        <target>lightningCommunity__Default</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__RecordPage,lightning__AppPage,lightning__HomePage,lightningCommunity__Default">
+            <property name="title" type="String" default="Review &amp; Summary" label="Title" description="Header title for the review summary"/>
+            <property name="formData" type="String" label="Form Data JSON" description="JSON string containing form data"/>
+            <property name="labelData" type="String" label="Label Data JSON" description="JSON string containing field labels"/>
+            <property name="hideEmptyFields" type="Boolean" default="false" label="Hide Empty Fields" description="Hide fields with no value"/>
+            <property name="collapsibleSections" type="Boolean" default="false" label="Collapsible Sections" description="Allow sections to be collapsed/expanded"/>
+            <property name="skipFieldsList" type="String" label="Skip Fields" description="Comma-separated list of field keys to skip (e.g., StatusValue,proposalID)"/>
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

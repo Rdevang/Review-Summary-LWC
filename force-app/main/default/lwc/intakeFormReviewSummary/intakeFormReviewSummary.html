@@ -1,0 +1,142 @@
+<template>
+    <div class="review-container">
+        <!-- Header -->
+        <div class="review-header">
+            <span class="header-title">{title}</span>
+        </div>
+        <div class="header-underline"></div>
+
+        <!-- Loading State -->
+        <template lwc:if={isLoading}>
+            <div class="slds-align_absolute-center slds-p-around_large">
+                <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- Error State -->
+        <template lwc:if={hasError}>
+            <div class="slds-box slds-theme_error slds-m-around_medium">
+                <div class="slds-align_absolute-center">
+                    <lightning-icon icon-name="utility:error" variant="inverse" size="small" class="slds-m-right_small"></lightning-icon>
+                    <span>{errorMessage}</span>
+                </div>
+            </div>
+        </template>
+
+        <!-- Content -->
+        <template lwc:if={showContent}>
+            <template lwc:if={hasSections}>
+                <!-- Sections Loop -->
+                <template for:each={processedSections} for:item="section">
+                    <div key={section.id} class="section">
+                        <!-- Section Header -->
+                        <div 
+                            class="section-header" 
+                            data-section-id={section.id} 
+                            onclick={handleSectionToggle}
+                            onkeydown={handleSectionKeydown}
+                            tabindex="0"
+                            role="button"
+                            aria-expanded={section.isExpanded}
+                            aria-controls={section.contentId}>
+                            <lightning-icon 
+                                icon-name={section.chevronIcon}
+                                size="x-small" 
+                                class="chevron-icon"
+                                aria-hidden="true">
+                            </lightning-icon>
+                            <span class="section-title">{section.title}</span>
+                        </div>
+
+                        <!-- Section Content -->
+                        <template lwc:if={section.isExpanded}>
+                            <div class="section-content" id={section.contentId}>
+                                <!-- Section Level Fields -->
+                                <template lwc:if={section.hasFields}>
+                                    <div class="field-grid">
+                                        <template for:each={section.fields} for:item="field">
+                                            <div key={field.id} class="field-item">
+                                                <div class="field-label">{field.label}</div>
+                                                <div class="field-value">{field.displayValue}</div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+
+                                <!-- Blocks -->
+                                <template for:each={section.blocks} for:item="block">
+                                    <div key={block.id} class="block">
+                                        <div class="block-title">{block.title}</div>
+                                        
+                                        <!-- Array Block - Use Table -->
+                                        <template lwc:if={block.isArray}>
+                                            <div class="table-container">
+                                                <table class="data-table" role="grid" aria-label={block.title}>
+                                                    <thead>
+                                                        <tr>
+                                                            <th scope="col">#</th>
+                                                            <template for:each={block.columns} for:item="col">
+                                                                <th key={col.fieldName} scope="col">{col.label}</th>
+                                                            </template>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <template for:each={block.items} for:item="item">
+                                                            <tr key={item.id}>
+                                                                <td>{item.index}</td>
+                                                                <template for:each={item.fields} for:item="itemField">
+                                                                    <td key={itemField.id}>{itemField.displayValue}</td>
+                                                                </template>
+                                                            </tr>
+                                                        </template>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </template>
+
+                                        <!-- Regular Block -->
+                                        <template lwc:else>
+                                            <div class="field-grid">
+                                                <template for:each={block.fields} for:item="blockField">
+                                                    <div key={blockField.id} class="field-item">
+                                                        <div class="field-label">{blockField.label}</div>
+                                                        <div class="field-value">{blockField.displayValue}</div>
+                                                    </div>
+                                                </template>
+                                            </div>
+
+                                            <!-- Nested Blocks -->
+                                            <template for:each={block.nestedBlocks} for:item="nestedBlock">
+                                                <div key={nestedBlock.id} class="nested-block">
+                                                    <div class="nested-block-title">{nestedBlock.title}</div>
+                                                    <div class="field-grid">
+                                                        <template for:each={nestedBlock.fields} for:item="nestedField">
+                                                            <div key={nestedField.id} class="field-item">
+                                                                <div class="field-label">{nestedField.label}</div>
+                                                                <div class="field-value">{nestedField.displayValue}</div>
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </template>
+
+            <!-- No Data State -->
+            <template lwc:else>
+                <div class="slds-box slds-m-around_medium">
+                    <div class="slds-align_absolute-center slds-text-color_weak">
+                        <lightning-icon icon-name="utility:info" size="small" class="slds-m-right_small"></lightning-icon>
+                        <span>No data available to display.</span>
+                    </div>
+                </div>
+            </template>
+        </template>
+    </div>
+</template>
