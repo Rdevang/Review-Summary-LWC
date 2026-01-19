@@ -4,22 +4,26 @@ A reusable Salesforce Lightning Web Component that dynamically renders a review 
 
 ## Features
 
-- **Dynamic Rendering**: Automatically processes nested objects and arrays from form data
-- **Label-Driven Display**: Only displays fields that have labels defined in `labelData` JSON
-- **Dual Context Support**: Works both as OmniStudio Custom LWC and standalone on Record Pages
-- **Collapsible Sections**: Expandable/collapsible sections with keyboard accessibility
-- **Smart Field Detection**: Auto-detects field types (email, phone, currency, date, boolean)
-- **Array Tables**: Renders repeatable blocks as accessible data tables
-- **WCAG 2.1 AA Compliant**: Built with accessibility standards in mind
+* **Dynamic Rendering**: Automatically processes nested objects and arrays from form data
+* **Label\-Driven Display**: Only displays fields that have labels defined in `labelData` JSON
+* **Dual Context Support**: Works both as OmniStudio Custom LWC and standalone on Record Pages
+* **Collapsible Sections**: Expandable/collapsible sections with keyboard accessibility
+* **Smart Field Detection**: Auto\-detects field types (email, phone, currency, date, boolean)
+* **Array Tables**: Renders repeatable blocks as accessible data tables
+* **WCAG 2.1 AA Compliant**: Built with accessibility standards in mind
 
-## Component Structure
+## Project Structure
 
 ```
-force-app/main/default/lwc/intakeFormReviewSummary/
-├── intakeFormReviewSummary.html      # Template
-├── intakeFormReviewSummary.js        # Controller
-├── intakeFormReviewSummary.css       # Styles
-└── intakeFormReviewSummary.js-meta.xml  # Metadata
+force-app/main/default/
+├── lwc/
+│   └── intakeFormReviewSummary/
+│       ├── intakeFormReviewSummary.html
+│       ├── intakeFormReviewSummary.js
+│       ├── intakeFormReviewSummary.css
+│       └── intakeFormReviewSummary.js-meta.xml
+└── omniScripts/
+    └── POC_ReviewSummary_English_1.os-meta.xml
 ```
 
 ## Usage
@@ -35,18 +39,24 @@ Add as a Custom LWC element. The component receives data via `omniJsonData`:
 }
 ```
 
+**Included POC OmniScript** (`POC_ReviewSummary_English_1`) demonstrates:
+
+* DataRaptor Extract to fetch proposal data
+* SetValues to define the `labelData` JSON mapping
+* Custom LWC step using `intakeFormReviewSummary`
+
 ### On Record Pages (App Builder)
 
 Configure via Lightning App Builder with these properties:
 
 | Property | Type | Description |
-|----------|------|-------------|
+|:---------|:-----|:------------|
 | `formData` | JSON String | The form data to display |
 | `labelData` | JSON String | Labels for fields (controls what's displayed) |
 | `title` | String | Header title (default: "Review & Summary") |
 | `hideEmptyFields` | Boolean | Hide fields with empty values |
 | `collapsibleSections` | Boolean | Enable section collapse/expand |
-| `skipFieldsList` | String | Comma-separated field names to skip |
+| `skipFieldsList` | String | Comma\-separated field names to skip |
 
 ## Label Data Format
 
@@ -67,26 +77,27 @@ The `labelData` JSON controls which fields are displayed and their labels:
 }
 ```
 
-**Key Points:**
-- Only fields with labels in `labelData` are rendered
-- Use `_sectionTitle` for section headers
-- Use `_blockTitle` for nested block headers
-- Supports nested objects and arrays
+### Key Points
+
+* Only fields with labels in `labelData` are rendered
+* Use `_sectionTitle` for section headers
+* Use `_blockTitle` for nested block headers
+* Supports nested objects and arrays
 
 ## Development
 
 ### Prerequisites
 
-- Salesforce CLI (`sf` or `sfdx`)
-- Node.js (for local development)
-- VS Code with Salesforce Extension Pack (recommended)
+* Salesforce CLI (`sf` or `sfdx`)
+* Node.js (for local development)
+* VS Code with Salesforce Extension Pack (recommended)
 
 ### Setup
 
 ```bash
 # Clone the repository
-git clone <repository-url>
-cd "Review Summary"
+git clone https://github.com/Rdevang/Review-Summary-LWC.git
+cd Review-Summary-LWC
 
 # Install dependencies
 npm install
@@ -101,9 +112,6 @@ sf project deploy start -o MyOrg
 ### Local Development
 
 ```bash
-# Start local development server
-sf lightning component create -n testComponent
-
 # Run linting
 npm run lint
 
@@ -131,8 +139,8 @@ sf project retrieve start -x manifest/package.xml -o <org-alias>
 
 ## API Version
 
-- Salesforce API Version: **65.0**
+* Salesforce API Version: **65.0**
 
 ## License
 
-Proprietary - Internal Use Only
+Proprietary \- Internal Use Only

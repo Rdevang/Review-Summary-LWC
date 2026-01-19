@@ -4,5 +4,9 @@
         <members>intakeFormReviewSummary</members>
         <name>LightningComponentBundle</name>
     </types>
+    <types>
+        <members>POC_ReviewSummary_English_1</members>
+        <name>OmniScript</name>
+    </types>
     <version>65.0</version>
 </Package>
