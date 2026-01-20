@@ -149,10 +149,75 @@ Create a DataRaptor Extract named `DRExtractLabelJSON`:
 
 ### Step 5: Create DataRaptor to Fetch Form Data
 
-Create a DataRaptor Extract for your form data (e.g., `DRExtractMAEOEDProposalData`):
+The form data is stored in **Long Text Area fields** on any Salesforce object. Each field stores the JSON for one OmniScript step.
 
-1. Configure extraction from your source object (e.g., Proposal, Application, etc.)
-2. Map fields to output JSON structure that matches your labelData keys
+#### 5.1 Create Long Text Area Fields on Your Object
+
+Create a Long Text Area field for **each step** in your OmniScript on your source object (can be any object \- Account, Case, Custom Object, etc.):
+
+| Field Pattern | Type | Length | Purpose |
+|:--------------|:-----|:-------|:--------|
+| `Step1_JSON__c` | Long Text Area | 131072 | Stores Step 1 form data as JSON |
+| `Step2_JSON__c` | Long Text Area | 131072 | Stores Step 2 form data as JSON |
+| `Step3_JSON__c` | Long Text Area | 131072 | Stores Step 3 form data as JSON |
+| ... | ... | ... | One field per step |
+
+**Example for MAEOED Proposal:**
+
+| Field Label | API Name |
+|:------------|:---------|
+| Eligibility Form JSON | `MAEOED_EligibilityForm__c` |
+| Applicant Information JSON | `MAEOED_ApplicantInformation__c` |
+| Application Overview JSON | `MAEOED_ApplicationOverview__c` |
+| Geography Target Population JSON | `MAEOED_GeographyTargetPopulation__c` |
+| Partnerships Collaboration JSON | `MAEOED_PartnershipsCollaboration__c` |
+
+#### 5.2 Create DataRaptor Extract
+
+Create a DataRaptor Extract to fetch the JSON fields:
+
+1. Go to **OmniStudio** → **DataRaptors** → **New**
+2. Configure:
+   * **Name**: `DRExtract<YourObject>Data`
+   * **Interface Type**: Extract
+   * **Input/Output Type**: JSON
+
+**EXTRACT Tab:**
+
+| Extract Object | Extract Field |
+|:---------------|:--------------|
+| `Your_Object__c` | `Step1_JSON__c` |
+| `Your_Object__c` | `Step2_JSON__c` |
+| `Your_Object__c` | `Step3_JSON__c` |
+| ... | ... |
+
+**Filter:**
+
+| Field | Operator | Value |
+|:------|:---------|:------|
+| `Id` | Equals | `:recordId` |
+
+**OUTPUT Tab (Map Field to Step Key):**
+
+Map each extracted field to the corresponding section key in your `labelData`:
+
+| Extract JSON Path | Output JSON Path |
+|:------------------|:-----------------|
+| `YourObject:Step1_JSON__c` | `Step1_Step` |
+| `YourObject:Step2_JSON__c` | `Step2_Step` |
+| `YourObject:Step3_JSON__c` | `Step3_Step` |
+
+> **Important**: The Output JSON Path must **exactly match** the section keys in your `labelData` JSON.
+
+**Example OUTPUT Mapping:**
+
+| Extract JSON Path | Output JSON Path |
+|:------------------|:-----------------|
+| `Proposal:MAEOED_EligibilityForm__c` | `MAEOED_EligibilityForm_Step` |
+| `Proposal:MAEOED_ApplicantInformation__c` | `MAEOED_ApplicantInformation_Step` |
+| `Proposal:MAEOED_ApplicationOverview__c` | `MAEOED_ApplicationOverview_Step` |
+| `Proposal:MAEOED_GeographyTargetPopulation__c` | `MAEOED_GeographyTargetPopulation_Step` |
+| `Proposal:MAEOED_PartnershipsCollaboration__c` | `MAEOED_PartnershipsCollaboration_Step` |
 
 ### Step 6: Create OmniScript
 
@@ -321,24 +386,39 @@ The `labelData` JSON controls which fields are displayed, their labels, ordering
 ### OmniScript Data Flow
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                      OmniScript                          │
-├─────────────────────────────────────────────────────────┤
-│  1. SetValues                                            │
-│     └── configDeveloperName = "Your_Config_Name"        │
-│                                                          │
-│  2. DataRaptor Extract (Label Config)                   │
-│     └── Output: labelData (JSON string)                 │
-│                                                          │
-│  3. DataRaptor Extract (Form Data)                      │
-│     └── Output: form data nodes                          │
-│                                                          │
-│  4. Custom LWC Step                                      │
-│     └── intakeFormReviewSummary                          │
-│         └── Receives omniJsonData with:                 │
-│             ├── labelData                                │
-│             └── form data                                │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                         DATA STORAGE                                  │
+├──────────────────────────────────────────────────────────────────────┤
+│  Custom Metadata (Form_Review_Config__mdt)                           │
+│  └── Label_JSON__c = labelData configuration                         │
+│                                                                       │
+│  Any Salesforce Object (Account, Case, Custom Object, etc.)          │
+│  ├── Step1_JSON__c (Long Text Area - stores step 1 form data)       │
+│  ├── Step2_JSON__c (Long Text Area - stores step 2 form data)       │
+│  ├── Step3_JSON__c (Long Text Area - stores step 3 form data)       │
+│  └── ... (one Long Text Area field per OmniScript step)             │
+└──────────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                         OMNISCRIPT FLOW                               │
+├──────────────────────────────────────────────────────────────────────┤
+│  1. SetValues                                                         │
+│     ├── configDeveloperName = "Your_Config_Name"                     │
+│     └── recordId = source record ID                                   │
+│                                                                       │
+│  2. DataRaptor Extract (Label Config)                                │
+│     └── Fetches labelData from Custom Metadata                       │
+│                                                                       │
+│  3. DataRaptor Extract (Form Data)                                   │
+│     └── Fetches JSON from Long Text Area fields                      │
+│     └── Maps fields to step node names                               │
+│                                                                       │
+│  4. Custom LWC Step (intakeFormReviewSummary)                        │
+│     └── Receives omniJsonData with:                                  │
+│         ├── labelData (controls display, order & formatting)        │
+│         └── Step nodes (form data from Long Text Area fields)       │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
