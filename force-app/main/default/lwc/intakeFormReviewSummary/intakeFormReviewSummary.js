@@ -146,19 +146,23 @@ export default class IntakeFormReviewSummary extends LightningElement {
     /**
      * @description Process form data into sections for rendering
      * Only processes sections that have labels defined in labelData
+     * IMPORTANT: Iterates over labelData keys to preserve JSON order
      */
     processFormData() {
         const sections = [];
 
-        for (const key of Object.keys(this._formData)) {
+        // Iterate over labelData keys to preserve the order defined in JSON
+        const keysToProcess = this._labelData ? Object.keys(this._labelData) : [];
+
+        for (const key of keysToProcess) {
             // Skip system fields (configurable via skipFieldsList)
             if (this._skipFields.includes(key)) continue;
 
             const value = this._formData[key];
-            const labelInfo = this._labelData ? this._labelData[key] : null;
+            const labelInfo = this._labelData[key];
 
-            // Only process sections that have label definitions
-            if (!labelInfo) continue;
+            // Skip if no corresponding data exists
+            if (value === undefined) continue;
 
             // Process based on value type
             if (this.isObject(value) && !Array.isArray(value)) {
@@ -176,6 +180,7 @@ export default class IntakeFormReviewSummary extends LightningElement {
     /**
      * @description Process a section (step) with its nested content
      * Only includes fields/blocks that have labels defined
+     * IMPORTANT: Iterates over sectionLabels keys to preserve JSON order
      */
     processSection(sectionKey, sectionData, sectionLabels) {
         // Use _sectionTitle from labels, or format from key
@@ -193,12 +198,18 @@ export default class IntakeFormReviewSummary extends LightningElement {
             fields: []
         };
 
-        for (const key of Object.keys(sectionData)) {
-            const value = sectionData[key];
-            const labelInfo = sectionLabels ? sectionLabels[key] : null;
+        // Iterate over sectionLabels keys to preserve the order defined in JSON
+        const keysToProcess = sectionLabels ? Object.keys(sectionLabels) : [];
 
-            // Skip fields/blocks without label definitions
-            if (!labelInfo) continue;
+        for (const key of keysToProcess) {
+            // Skip internal label keys
+            if (key.startsWith('_')) continue;
+
+            const value = sectionData[key];
+            const labelInfo = sectionLabels[key];
+
+            // Skip if no corresponding data exists
+            if (value === undefined) continue;
 
             if (Array.isArray(value)) {
                 // It's an array - process as repeatable block (needs _blockTitle or field labels)
@@ -238,6 +249,7 @@ export default class IntakeFormReviewSummary extends LightningElement {
     /**
      * @description Process a nested block
      * Only includes fields that have labels defined in blockLabels
+     * IMPORTANT: Iterates over blockLabels keys to preserve JSON order
      */
     processBlock(blockKey, blockData, blockLabels) {
         // Block must have labels defined (either _blockTitle or field labels)
@@ -255,15 +267,16 @@ export default class IntakeFormReviewSummary extends LightningElement {
             nestedBlocks: []
         };
 
-        for (const key of Object.keys(blockData)) {
-            // Skip internal keys
+        // Iterate over blockLabels keys to preserve the order defined in JSON
+        for (const key of Object.keys(blockLabels)) {
+            // Skip internal label keys
             if (key.startsWith('_')) continue;
 
             const value = blockData[key];
             const labelInfo = blockLabels[key];
 
-            // Skip fields without label definitions
-            if (!labelInfo) continue;
+            // Skip if no corresponding data exists
+            if (value === undefined) continue;
 
             if (this.isObject(value) && !Array.isArray(value)) {
                 // Nested block (like address blocks) - labelInfo must be an object
@@ -294,6 +307,7 @@ export default class IntakeFormReviewSummary extends LightningElement {
     /**
      * @description Process an array as a repeatable block with items
      * Only includes fields that have labels defined
+     * IMPORTANT: Iterates over itemLabels keys to preserve JSON order
      */
     processArray(arrayKey, arrayData, arrayLabels) {
         if (!arrayData || arrayData.length === 0 || !arrayLabels) {
@@ -318,6 +332,9 @@ export default class IntakeFormReviewSummary extends LightningElement {
             columns: []
         };
 
+        // Get label keys in order (excluding internal keys)
+        const labelKeys = Object.keys(itemLabels).filter(k => !k.startsWith('_'));
+
         // Process each item in the array
         arrayData.forEach((item, index) => {
             const processedItem = {
@@ -326,12 +343,13 @@ export default class IntakeFormReviewSummary extends LightningElement {
                 fields: []
             };
 
-            for (const key of Object.keys(item)) {
-                // Skip internal keys
-                if (key.startsWith('_')) continue;
-
+            // Iterate over itemLabels keys to preserve the order defined in JSON
+            for (const key of labelKeys) {
                 const value = item[key];
                 const label = itemLabels[key];
+
+                // Skip if no corresponding data exists
+                if (value === undefined) continue;
 
                 // Only include fields with string labels
                 if (typeof label !== 'string') continue;
