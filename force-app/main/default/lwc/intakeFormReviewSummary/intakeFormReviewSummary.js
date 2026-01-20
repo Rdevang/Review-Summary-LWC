@@ -13,7 +13,7 @@ export default class IntakeFormReviewSummary extends LightningElement {
     // API properties for use on record pages
     @api formData;
     @api labelData;
-    @api title = 'Review & Summary';
+    @api title = '';
     @api hideEmptyFields = false;
     @api collapsibleSections = false;
 
@@ -170,8 +170,8 @@ export default class IntakeFormReviewSummary extends LightningElement {
                 const section = this.processSection(key, value, labelInfo);
                 if (section) {
                     // Add order from labelInfo if specified
-                    section.order = (labelInfo && typeof labelInfo._order === 'number') 
-                        ? labelInfo._order 
+                    section.order = (labelInfo && typeof labelInfo._order === 'number')
+                        ? labelInfo._order
                         : 999;
                     sections.push(section);
                 }
