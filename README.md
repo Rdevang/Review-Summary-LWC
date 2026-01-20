@@ -6,9 +6,10 @@ A reusable Salesforce Lightning Web Component that dynamically renders a review 
 
 * **Dynamic Rendering**: Automatically processes nested objects and arrays from form data
 * **Label\-Driven Display**: Only displays fields that have labels defined in `labelData` JSON
+* **Order Preservation**: Renders sections, blocks, and fields in the exact order defined in `labelData`
+* **Explicit Type Formatting**: Supports phone, email, currency, date, boolean, and number formatting
 * **Dual Context Support**: Works both as OmniStudio Custom LWC and standalone on Record Pages
 * **Collapsible Sections**: Expandable/collapsible sections with keyboard accessibility
-* **Smart Field Detection**: Auto\-detects field types (email, phone, currency, date, boolean)
 * **Array Tables**: Renders repeatable blocks as accessible data tables
 * **WCAG 2.1 AA Compliant**: Built with accessibility standards in mind
 
@@ -60,18 +61,67 @@ Configure via Lightning App Builder with these properties:
 
 ## Label Data Format
 
-The `labelData` JSON controls which fields are displayed and their labels:
+The `labelData` JSON controls which fields are displayed, their labels, and formatting.
+
+### Basic Format (Auto\-detect Type)
 
 ```json
 {
   "PersonalInfo_Step": {
     "_sectionTitle": "Personal Information",
     "firstName": "First Name",
-    "lastName": "Last Name",
-    "contactBlock": {
+    "lastName": "Last Name"
+  }
+}
+```
+
+### Advanced Format (Explicit Type)
+
+Use object syntax to specify formatting type:
+
+```json
+{
+  "PersonalInfo_Step": {
+    "_sectionTitle": "Personal Information",
+    "phone": { "label": "Phone Number", "type": "phone" },
+    "email": { "label": "Email Address", "type": "email" },
+    "salary": { "label": "Annual Salary", "type": "currency" },
+    "birthDate": { "label": "Date of Birth", "type": "date" },
+    "isActive": { "label": "Is Active?", "type": "boolean" },
+    "count": { "label": "Total Count", "type": "number" }
+  }
+}
+```
+
+### Supported Types & Formatting
+
+| Type | Input | Output |
+|:-----|:------|:-------|
+| `phone` | `8745638765` | `(874) 563-8765` |
+| `email` | `John@Example.COM` | `john@example.com` |
+| `currency` | `15000` | `$15,000.00` |
+| `date` | `2026-12-31` | `December 31, 2026` |
+| `boolean` | `true` | `Yes` |
+| `number` | `1000` | `1,000` |
+
+### Nested Blocks Example
+
+```json
+{
+  "ApplicantInfo_Step": {
+    "_sectionTitle": "Applicant Information",
+    "ContactBlock": {
       "_blockTitle": "Contact Details",
-      "email": "Email Address",
-      "phone": "Phone Number"
+      "name": "Full Name",
+      "email": { "label": "Email", "type": "email" },
+      "phone": { "label": "Phone", "type": "phone" },
+      "AddressBlock": {
+        "_blockTitle": "Mailing Address",
+        "street": "Street",
+        "city": "City",
+        "state": "State",
+        "zipCode": "Zip Code"
+      }
     }
   }
 }
@@ -80,9 +130,11 @@ The `labelData` JSON controls which fields are displayed and their labels:
 ### Key Points
 
 * Only fields with labels in `labelData` are rendered
+* Order follows `labelData` structure (not `formData`)
 * Use `_sectionTitle` for section headers
 * Use `_blockTitle` for nested block headers
 * Supports nested objects and arrays
+* Type is auto\-detected if not specified
 
 ## Development
 

@@ -225,7 +225,7 @@ export default class IntakeFormReviewSummary extends LightningElement {
                 }
             } else {
                 // It's a simple field - labelInfo can be string or object with label/type
-                const isValidLabel = typeof labelInfo === 'string' || 
+                const isValidLabel = typeof labelInfo === 'string' ||
                     (typeof labelInfo === 'object' && labelInfo.label);
                 if (isValidLabel) {
                     const field = this.processField(key, value, labelInfo);
@@ -289,7 +289,7 @@ export default class IntakeFormReviewSummary extends LightningElement {
                 }
             } else if (!Array.isArray(value)) {
                 // Simple field - labelInfo can be string or object with label/type
-                const isValidLabel = typeof labelInfo === 'string' || 
+                const isValidLabel = typeof labelInfo === 'string' ||
                     (typeof labelInfo === 'object' && labelInfo.label);
                 if (isValidLabel) {
                     const field = this.processField(key, value, labelInfo);
@@ -355,7 +355,7 @@ export default class IntakeFormReviewSummary extends LightningElement {
                 if (value === undefined) continue;
 
                 // Only include fields with valid labels (string or object with label)
-                const isValidLabel = typeof labelInfo === 'string' || 
+                const isValidLabel = typeof labelInfo === 'string' ||
                     (typeof labelInfo === 'object' && labelInfo.label);
                 if (!isValidLabel) continue;
 
@@ -531,10 +531,10 @@ export default class IntakeFormReviewSummary extends LightningElement {
      */
     formatPhoneNumber(value) {
         if (!value) return '—';
-        
+
         // Remove all non-numeric characters
         const cleaned = String(value).replace(/\D/g, '');
-        
+
         // Format based on length
         if (cleaned.length === 10) {
             // US format: (XXX) XXX-XXXX
@@ -546,7 +546,7 @@ export default class IntakeFormReviewSummary extends LightningElement {
             // International: +XX XXX XXX XXXX
             return `+${cleaned.slice(0, cleaned.length - 10)} ${cleaned.slice(-10, -7)} ${cleaned.slice(-7, -4)} ${cleaned.slice(-4)}`;
         }
-        
+
         // Return original if can't format
         return String(value);
     }
@@ -556,10 +556,10 @@ export default class IntakeFormReviewSummary extends LightningElement {
      */
     formatDate(value) {
         if (!value) return '—';
-        
+
         try {
             let date;
-            
+
             // Handle different date formats
             if (typeof value === 'string') {
                 // ISO format: YYYY-MM-DD
@@ -574,12 +574,12 @@ export default class IntakeFormReviewSummary extends LightningElement {
             } else {
                 return String(value);
             }
-            
+
             // Check if valid date
             if (isNaN(date.getTime())) {
                 return String(value);
             }
-            
+
             return date.toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
