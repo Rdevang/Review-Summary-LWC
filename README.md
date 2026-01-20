@@ -292,6 +292,14 @@ Create an OmniScript to tie everything together:
 
 The `labelData` JSON controls which fields are displayed, their labels, ordering, and formatting.
 
+> **⚠️ IMPORTANT:** The `labelData` JSON structure must **mirror the exact structure** of your OmniScript's form data JSON. This includes:
+> * **Section keys** must match step names (e.g., `MAEOED_EligibilityForm_Step`)
+> * **Field keys** must match OmniScript field names exactly (case\-sensitive)
+> * **Block keys** must match OmniScript block names (e.g., `ContactInfoBlock`, `AddressBlock`)
+> * **Nested structure** must follow the same hierarchy as your OmniScript
+>
+> **Tip:** Run your OmniScript in Preview mode and check the browser console for `omniJsonData` to see the exact structure of your form data. Use this as a template for your `labelData` JSON.
+
 ### Basic Structure
 
 ```json
