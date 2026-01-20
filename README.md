@@ -241,7 +241,7 @@ Create an OmniScript to tie everything together:
 ```json
 {
   "configDeveloperName": "MAEOED_Proposal_Config",
-  "proposalID": "=IF(%isPortalUser%, %proposal%, %ContextId%)",
+  "recordId": "=IF(%isPortalUser%, %recordId%, %ContextId%)",
   "isPortalUser": "=%userProfile% != \"System Administrator\""
 }
 ```
@@ -262,13 +262,13 @@ Create an OmniScript to tie everything together:
 
 **Name**: `DRExtractDataJSON`
 
-**DataRaptor Interface**: `DRExtractMAEOEDProposalData`
+**DataRaptor Interface**: `DRExtract<YourObject>Data`
 
 **Input Parameters**:
 
 | Key | Value |
 |:----|:------|
-| `propID` | `%proposalID%` |
+| `recordId` | `%recordId%` |
 
 #### 6.4 Step with Custom LWC
 
