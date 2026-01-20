@@ -43,27 +43,44 @@ export default class IntakeFormReviewSummary extends LightningElement {
     // Default fields to skip (can be overridden via skipFieldsList)
     _skipFields = [];
 
-    connectedCallback() {
-        this.initializeData();
-    }
+    _lastOmniDataHash = null;
+    _isInitialized = false;
 
-    /**
-     * @description Re-initialize when omniJsonData changes (OmniScript navigation)
-     */
-    renderedCallback() {
-        // Check if omniJsonData changed and re-process
-        if (this.omniJsonData && this._lastOmniDataHash !== JSON.stringify(this.omniJsonData)) {
-            this._lastOmniDataHash = JSON.stringify(this.omniJsonData);
+    connectedCallback() {
+        // Only initialize if we have data; otherwise wait for renderedCallback
+        if (this.omniJsonData || this.formData) {
             this.initializeData();
         }
     }
 
-    _lastOmniDataHash = null;
+    /**
+     * @description Re-initialize when omniJsonData changes (OmniScript navigation)
+     *              Also handles initial data arrival in OmniScript Preview
+     */
+    renderedCallback() {
+        // Handle initial data arrival or data changes
+        if (this.omniJsonData) {
+            const currentHash = JSON.stringify(this.omniJsonData);
+            if (this._lastOmniDataHash !== currentHash) {
+                this._lastOmniDataHash = currentHash;
+                this.initializeData();
+            }
+        } else if (!this._isInitialized && this.formData) {
+            // Fallback for record page with formData
+            this.initializeData();
+        }
+    }
 
     /**
      * @description Initialize data from either API properties or OmniScript
      */
     initializeData() {
+        // Reset state on each initialization attempt
+        this.hasError = false;
+        this.errorMessage = '';
+        this.isLoading = true;
+        this._isInitialized = true;
+
         try {
             // Try to get data from OmniScript first
             if (this.omniJsonData) {
