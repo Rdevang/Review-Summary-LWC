@@ -146,12 +146,12 @@ export default class IntakeFormReviewSummary extends LightningElement {
     /**
      * @description Process form data into sections for rendering
      * Only processes sections that have labels defined in labelData
-     * IMPORTANT: Iterates over labelData keys to preserve JSON order
+     * Supports _order property for explicit ordering (handles DataRaptor order reversal)
      */
     processFormData() {
         const sections = [];
 
-        // Iterate over labelData keys to preserve the order defined in JSON
+        // Get all section keys from labelData
         const keysToProcess = this._labelData ? Object.keys(this._labelData) : [];
 
         for (const key of keysToProcess) {
@@ -169,10 +169,17 @@ export default class IntakeFormReviewSummary extends LightningElement {
                 // It's a section/step with nested content
                 const section = this.processSection(key, value, labelInfo);
                 if (section) {
+                    // Add order from labelInfo if specified
+                    section.order = (labelInfo && typeof labelInfo._order === 'number') 
+                        ? labelInfo._order 
+                        : 999;
                     sections.push(section);
                 }
             }
         }
+
+        // Sort sections by _order property (ascending)
+        sections.sort((a, b) => a.order - b.order);
 
         this.processedSections = sections;
     }
