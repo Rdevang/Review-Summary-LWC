@@ -141,15 +141,29 @@
     padding: 0;
 }
 
-/* Field Grid - Two columns */
+/* Field Grid - 12-column system for flexible layouts */
 .field-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.75rem 2rem;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 0.75rem 1rem;
     background: transparent;
     border: none;
     padding: 0;
 }
+
+/* Colspan classes for field width control */
+.span-1  { grid-column: span 1; }
+.span-2  { grid-column: span 2; }
+.span-3  { grid-column: span 3; }
+.span-4  { grid-column: span 4; }
+.span-5  { grid-column: span 5; }
+.span-6  { grid-column: span 6; }
+.span-7  { grid-column: span 7; }
+.span-8  { grid-column: span 8; }
+.span-9  { grid-column: span 9; }
+.span-10 { grid-column: span 10; }
+.span-11 { grid-column: span 11; }
+.span-12 { grid-column: span 12; }
 
 /* Field Item - No card styling */
 .field-item {
@@ -238,6 +252,12 @@
     .field-grid {
         grid-template-columns: 1fr;
         gap: 0.75rem;
+    }
+
+    /* Reset all spans to full width on mobile */
+    .span-1, .span-2, .span-3, .span-4, .span-5, .span-6,
+    .span-7, .span-8, .span-9, .span-10, .span-11, .span-12 {
+        grid-column: span 1;
     }
 
     .section-content {

@@ -19,6 +19,7 @@ A reusable Salesforce Lightning Web Component that dynamically renders a review 
 * **Label\-Driven Display**: Only displays fields that have labels defined in `labelData` JSON
 * **Explicit Ordering**: Use `_order` property to control section/block display order
 * **Explicit Type Formatting**: Supports phone, email, currency, date, boolean, and number formatting
+* **Flexible Grid Layout**: 12\-column grid with configurable `colspan` for field widths
 * **Custom Metadata Support**: Store label configs in Custom Metadata for easy maintenance
 * **Dual Context Support**: Works both as OmniStudio Custom LWC and standalone on Record Pages
 * **Collapsible Sections**: Expandable/collapsible sections with keyboard accessibility
@@ -322,6 +323,59 @@ The `labelData` JSON controls which fields are displayed, their labels, ordering
 }
 ```
 
+### With Colspan (Grid Layout)
+
+The component uses a 12\-column grid system. Use `colspan` to control field width:
+
+```json
+{
+  "ApplicationForm_Step": {
+    "_sectionTitle": "Application Details",
+    "_order": 1,
+    "applicantName": "Applicant Name",
+    "applicationDate": { "label": "Application Date", "type": "date" },
+    "description": { "label": "Description", "colspan": 12 },
+    "category": { "label": "Category", "colspan": 4 },
+    "priority": { "label": "Priority", "colspan": 4 },
+    "status": { "label": "Status", "colspan": 4 },
+    "notes": { "label": "Additional Notes", "type": "text", "colspan": 12 }
+  }
+}
+```
+
+**Common Colspan Values:**
+
+| Colspan | Width | Fields Per Row | Use Case |
+|:--------|:------|:---------------|:---------|
+| `3` | 25% | 4 | Compact fields (status, flags) |
+| `4` | 33% | 3 | Medium fields (dates, short text) |
+| `6` | 50% | 2 | **Default** \- standard fields |
+| `12` | 100% | 1 | Full width (descriptions, addresses) |
+
+**Visual Layout:**
+
+```
+colspan: 12 (full width)
+┌──────────────────────────────────────────────────┐
+│ Description                                       │
+└──────────────────────────────────────────────────┘
+
+colspan: 6 (half width \- default)
+┌───────────────────────┐ ┌───────────────────────┐
+│ First Name            │ │ Last Name             │
+└───────────────────────┘ └───────────────────────┘
+
+colspan: 4 (third width)
+┌───────────────┐ ┌───────────────┐ ┌───────────────┐
+│ Category      │ │ Priority      │ │ Status        │
+└───────────────┘ └───────────────┘ └───────────────┘
+
+colspan: 3 (quarter width)
+┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
+│ Q1       │ │ Q2       │ │ Q3       │ │ Q4       │
+└──────────┘ └──────────┘ └──────────┘ └──────────┘
+```
+
 ### With Nested Blocks
 
 ```json
@@ -364,8 +418,9 @@ The `labelData` JSON controls which fields are displayed, their labels, ordering
 | `_sectionTitle` | Section | Yes | Display title for section header |
 | `_blockTitle` | Block | Yes | Display title for block header |
 | `_order` | Section/Block | Recommended | Sort order (ascending, 1 = first) |
-| `label` | Field | Yes (if object) | Display label when using type |
+| `label` | Field | Yes (if object) | Display label when using type/colspan |
 | `type` | Field | No | Format type: phone, email, currency, date, boolean, number |
+| `colspan` | Field | No | Grid column span (1\-12), default 6 (half width) |
 
 ---
 

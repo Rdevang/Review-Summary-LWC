@@ -1,10 +1,12 @@
 <template>
     <div class="review-container">
-        <!-- Header -->
-        <div class="review-header">
-            <span class="header-title">{title}</span>
-        </div>
-        <div class="header-underline"></div>
+        <!-- Header (only shown when title is provided) -->
+        <template lwc:if={hasTitle}>
+            <div class="review-header">
+                <span class="header-title">{title}</span>
+            </div>
+            <div class="header-underline"></div>
+        </template>
 
         <!-- Loading State -->
         <template lwc:if={isLoading}>
@@ -55,7 +57,7 @@
                                 <template lwc:if={section.hasFields}>
                                     <div class="field-grid">
                                         <template for:each={section.fields} for:item="field">
-                                            <div key={field.id} class="field-item">
+                                            <div key={field.id} class={field.spanClass}>
                                                 <div class="field-label">{field.label}</div>
                                                 <div class="field-value">{field.displayValue}</div>
                                             </div>
@@ -98,7 +100,7 @@
                                         <template lwc:else>
                                             <div class="field-grid">
                                                 <template for:each={block.fields} for:item="blockField">
-                                                    <div key={blockField.id} class="field-item">
+                                                    <div key={blockField.id} class={blockField.spanClass}>
                                                         <div class="field-label">{blockField.label}</div>
                                                         <div class="field-value">{blockField.displayValue}</div>
                                                     </div>
@@ -111,7 +113,7 @@
                                                     <div class="nested-block-title">{nestedBlock.title}</div>
                                                     <div class="field-grid">
                                                         <template for:each={nestedBlock.fields} for:item="nestedField">
-                                                            <div key={nestedField.id} class="field-item">
+                                                            <div key={nestedField.id} class={nestedField.spanClass}>
                                                                 <div class="field-label">{nestedField.label}</div>
                                                                 <div class="field-value">{nestedField.displayValue}</div>
                                                             </div>

@@ -84,7 +84,6 @@ export default class IntakeFormReviewSummary extends LightningElement {
         try {
             // Try to get data from OmniScript first
             if (this.omniJsonData) {
-                console.log('IntakeFormReviewSummary - omniJsonData:', JSON.stringify(this.omniJsonData));
 
                 // OmniStudio passes data in different ways:
                 // 1. As specific properties: formData, labelData
@@ -158,11 +157,21 @@ export default class IntakeFormReviewSummary extends LightningElement {
             // Skip system fields (configurable via skipFieldsList)
             if (this._skipFields.includes(key)) continue;
 
-            const value = this._formData[key];
+            let value = this._formData[key];
             const labelInfo = this._labelData[key];
 
             // Skip if no corresponding data exists
-            if (value === undefined) continue;
+            if (value === undefined || value === null) continue;
+
+            // Parse JSON string if the value is a string (from Long Text Area fields)
+            if (typeof value === 'string') {
+                try {
+                    value = JSON.parse(value);
+                } catch (e) {
+                    console.warn(`Failed to parse JSON for section ${key}:`, e);
+                    continue;
+                }
+            }
 
             // Process based on value type
             if (this.isObject(value) && !Array.isArray(value)) {
@@ -395,7 +404,7 @@ export default class IntakeFormReviewSummary extends LightningElement {
      * @param {*} value - Field value
      * @param {string|object} labelInfo - Label from labelData. Can be:
      *   - String: "Label Text" (auto-detect type)
-     *   - Object: { "label": "Label Text", "type": "phone|email|currency|date|boolean|number" }
+     *   - Object: { "label": "Label Text", "type": "phone|email|currency|date|boolean|number", "colspan": 1-12 }
      */
     processField(key, value, labelInfo) {
         // Label is required - if not provided, don't show the field
@@ -404,13 +413,18 @@ export default class IntakeFormReviewSummary extends LightningElement {
         }
 
         // Support both string and object format for labelInfo
-        let label, explicitType;
+        let label, explicitType, colspan;
         if (typeof labelInfo === 'object' && labelInfo.label) {
             label = labelInfo.label;
             explicitType = labelInfo.type;
+            // Extract colspan (default 6 for half-width, clamp to 1-12)
+            colspan = typeof labelInfo.colspan === 'number'
+                ? Math.min(Math.max(labelInfo.colspan, 1), 12)
+                : 6;
         } else if (typeof labelInfo === 'string') {
             label = labelInfo;
             explicitType = null;
+            colspan = 6; // Default half-width
         } else {
             return null;
         }
@@ -436,7 +450,10 @@ export default class IntakeFormReviewSummary extends LightningElement {
             isText: !['boolean', 'currency', 'date', 'email', 'phone', 'number'].includes(fieldType),
             // Pre-computed values for boolean display (LWC doesn't support ternary in templates)
             booleanIcon: isBoolean ? (value ? 'utility:check' : 'utility:close') : '',
-            booleanIconClass: isBoolean ? (value ? 'icon-success' : 'icon-error') : ''
+            booleanIconClass: isBoolean ? (value ? 'icon-success' : 'icon-error') : '',
+            // Colspan for 12-column grid layout
+            colspan: colspan,
+            spanClass: `field-item span-${colspan}`
         };
     }
 
@@ -699,6 +716,13 @@ export default class IntakeFormReviewSummary extends LightningElement {
      */
     get hasSections() {
         return this.processedSections && this.processedSections.length > 0;
+    }
+
+    /**
+     * @description Check if title is provided (non-empty)
+     */
+    get hasTitle() {
+        return this.title && this.title.trim().length > 0;
     }
 
     /**
