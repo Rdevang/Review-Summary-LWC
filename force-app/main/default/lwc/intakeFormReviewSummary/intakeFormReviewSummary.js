@@ -224,10 +224,11 @@ export default class IntakeFormReviewSummary extends LightningElement {
                     section.blocks.push(block);
                 }
             } else {
-                // It's a simple field - labelInfo is the label string
-                const label = typeof labelInfo === 'string' ? labelInfo : null;
-                if (label) {
-                    const field = this.processField(key, value, label);
+                // It's a simple field - labelInfo can be string or object with label/type
+                const isValidLabel = typeof labelInfo === 'string' || 
+                    (typeof labelInfo === 'object' && labelInfo.label);
+                if (isValidLabel) {
+                    const field = this.processField(key, value, labelInfo);
                     if (field && (!this.hideEmptyFields || field.displayValue !== '—')) {
                         section.fields.push(field);
                     }
@@ -287,8 +288,10 @@ export default class IntakeFormReviewSummary extends LightningElement {
                     }
                 }
             } else if (!Array.isArray(value)) {
-                // Simple field - labelInfo must be a string
-                if (typeof labelInfo === 'string') {
+                // Simple field - labelInfo can be string or object with label/type
+                const isValidLabel = typeof labelInfo === 'string' || 
+                    (typeof labelInfo === 'object' && labelInfo.label);
+                if (isValidLabel) {
                     const field = this.processField(key, value, labelInfo);
                     if (field && (!this.hideEmptyFields || field.displayValue !== '—')) {
                         block.fields.push(field);
@@ -346,15 +349,17 @@ export default class IntakeFormReviewSummary extends LightningElement {
             // Iterate over itemLabels keys to preserve the order defined in JSON
             for (const key of labelKeys) {
                 const value = item[key];
-                const label = itemLabels[key];
+                const labelInfo = itemLabels[key];
 
                 // Skip if no corresponding data exists
                 if (value === undefined) continue;
 
-                // Only include fields with string labels
-                if (typeof label !== 'string') continue;
+                // Only include fields with valid labels (string or object with label)
+                const isValidLabel = typeof labelInfo === 'string' || 
+                    (typeof labelInfo === 'object' && labelInfo.label);
+                if (!isValidLabel) continue;
 
-                const field = this.processField(key, value, label);
+                const field = this.processField(key, value, labelInfo);
 
                 if (field && (!this.hideEmptyFields || field.displayValue !== '—')) {
                     processedItem.fields.push(field);
@@ -381,15 +386,30 @@ export default class IntakeFormReviewSummary extends LightningElement {
      * @description Process a single field
      * @param {string} key - Field key
      * @param {*} value - Field value
-     * @param {string} label - Label from labelData (required - fields without labels are filtered out earlier)
+     * @param {string|object} labelInfo - Label from labelData. Can be:
+     *   - String: "Label Text" (auto-detect type)
+     *   - Object: { "label": "Label Text", "type": "phone|email|currency|date|boolean|number" }
      */
-    processField(key, value, label) {
+    processField(key, value, labelInfo) {
         // Label is required - if not provided, don't show the field
-        if (!label) {
+        if (!labelInfo) {
             return null;
         }
 
-        const fieldType = this.detectFieldType(key, value);
+        // Support both string and object format for labelInfo
+        let label, explicitType;
+        if (typeof labelInfo === 'object' && labelInfo.label) {
+            label = labelInfo.label;
+            explicitType = labelInfo.type;
+        } else if (typeof labelInfo === 'string') {
+            label = labelInfo;
+            explicitType = null;
+        } else {
+            return null;
+        }
+
+        // Use explicit type if provided, otherwise auto-detect
+        const fieldType = explicitType || this.detectFieldType(key, value);
         const displayValue = this.formatValue(value, fieldType);
         const isBoolean = fieldType === 'boolean';
 
@@ -405,7 +425,8 @@ export default class IntakeFormReviewSummary extends LightningElement {
             isDate: fieldType === 'date',
             isEmail: fieldType === 'email',
             isPhone: fieldType === 'phone',
-            isText: !['boolean', 'currency', 'date', 'email', 'phone'].includes(fieldType),
+            isNumber: fieldType === 'number',
+            isText: !['boolean', 'currency', 'date', 'email', 'phone', 'number'].includes(fieldType),
             // Pre-computed values for boolean display (LWC doesn't support ternary in templates)
             booleanIcon: isBoolean ? (value ? 'utility:check' : 'utility:close') : '',
             booleanIconClass: isBoolean ? (value ? 'icon-success' : 'icon-error') : ''
@@ -442,42 +463,131 @@ export default class IntakeFormReviewSummary extends LightningElement {
     }
 
     /**
-     * @description Format value for display
+     * @description Format value for display based on field type
      */
     formatValue(value, fieldType) {
         if (value === null || value === undefined || value === '') {
             return '—';
         }
 
-        if (typeof value === 'boolean') {
-            return value ? 'Yes' : 'No';
-        }
-
-        if (fieldType === 'currency' && typeof value === 'number') {
-            return new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'USD'
-            }).format(value);
-        }
-
-        if (fieldType === 'date' && typeof value === 'string') {
-            try {
-                const date = new Date(value);
-                return date.toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-            } catch (e) {
-                return value;
+        // Boolean formatting
+        if (typeof value === 'boolean' || fieldType === 'boolean') {
+            if (typeof value === 'boolean') {
+                return value ? 'Yes' : 'No';
             }
+            // Handle string booleans
+            const strVal = String(value).toLowerCase();
+            if (strVal === 'true' || strVal === 'yes') return 'Yes';
+            if (strVal === 'false' || strVal === 'no') return 'No';
+            return String(value);
         }
 
+        // Currency formatting
+        if (fieldType === 'currency') {
+            const numValue = typeof value === 'number' ? value : parseFloat(value);
+            if (!isNaN(numValue)) {
+                return new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD'
+                }).format(numValue);
+            }
+            return String(value);
+        }
+
+        // Phone number formatting
+        if (fieldType === 'phone') {
+            return this.formatPhoneNumber(value);
+        }
+
+        // Email formatting (lowercase, trimmed)
+        if (fieldType === 'email') {
+            return String(value).trim().toLowerCase();
+        }
+
+        // Date formatting
+        if (fieldType === 'date') {
+            return this.formatDate(value);
+        }
+
+        // Number formatting
+        if (fieldType === 'number') {
+            const numValue = typeof value === 'number' ? value : parseFloat(value);
+            if (!isNaN(numValue)) {
+                return numValue.toLocaleString('en-US');
+            }
+            return String(value);
+        }
+
+        // Default: return as string
         if (typeof value === 'number') {
             return value.toLocaleString();
         }
 
         return String(value);
+    }
+
+    /**
+     * @description Format phone number to (XXX) XXX-XXXX format
+     */
+    formatPhoneNumber(value) {
+        if (!value) return '—';
+        
+        // Remove all non-numeric characters
+        const cleaned = String(value).replace(/\D/g, '');
+        
+        // Format based on length
+        if (cleaned.length === 10) {
+            // US format: (XXX) XXX-XXXX
+            return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+        } else if (cleaned.length === 11 && cleaned.startsWith('1')) {
+            // US with country code: +1 (XXX) XXX-XXXX
+            return `+1 (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`;
+        } else if (cleaned.length > 10) {
+            // International: +XX XXX XXX XXXX
+            return `+${cleaned.slice(0, cleaned.length - 10)} ${cleaned.slice(-10, -7)} ${cleaned.slice(-7, -4)} ${cleaned.slice(-4)}`;
+        }
+        
+        // Return original if can't format
+        return String(value);
+    }
+
+    /**
+     * @description Format date to readable format
+     */
+    formatDate(value) {
+        if (!value) return '—';
+        
+        try {
+            let date;
+            
+            // Handle different date formats
+            if (typeof value === 'string') {
+                // ISO format: YYYY-MM-DD
+                if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+                    const [year, month, day] = value.split('-').map(Number);
+                    date = new Date(year, month - 1, day);
+                } else {
+                    date = new Date(value);
+                }
+            } else if (value instanceof Date) {
+                date = value;
+            } else {
+                return String(value);
+            }
+            
+            // Check if valid date
+            if (isNaN(date.getTime())) {
+                return String(value);
+            }
+            
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        } catch (e) {
+            return String(value);
+        }
     }
 
     /**
