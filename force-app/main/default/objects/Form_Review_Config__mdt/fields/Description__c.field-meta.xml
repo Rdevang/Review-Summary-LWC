@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Description__c</fullName>
+    <description>Human\-readable description of this configuration for documentation purposes. Explains what form this config is for and any special notes.</description>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <inlineHelpText>Describe the purpose of this configuration and any special considerations</inlineHelpText>
+    <label>Description</label>
+    <required>false</required>
+    <type>TextArea</type>
+</CustomField>

@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>MAEOED Proposal Review Config</label>
+    <protected>false</protected>
+    <values>
+        <field>Description__c</field>
+        <value xsi:type="xsd:string">Stores label configuration JSON for the Intake Form Review Summary LWC. Controls which fields are displayed, their labels, formatting types, and display order in the review/summary view.</value>
+    </values>
+    <values>
+        <field>Form_Type__c</field>
+        <value xsi:type="xsd:string">MA EOED Intake Form</value>
+    </values>
+    <values>
+        <field>Is_Active__c</field>
+        <value xsi:type="xsd:boolean">true</value>
+    </values>
+    <values>
+        <field>Label_JSON__c</field>
+        <value xsi:type="xsd:string">{
+  &quot;MAEOED_EligibilityForm_Step&quot;: {
+    &quot;_sectionTitle&quot;: &quot;Eligibility Form&quot;,
+    &quot;_order&quot;: 1,
+    &quot;EligibilityForm_CertificationTruth&quot;: { &quot;label&quot;: &quot;I certify that the information provided is true&quot;, &quot;type&quot;: &quot;boolean&quot; },
+    &quot;EligibilityForm_NonProfitStatus&quot;: &quot;Is the organization a Non-Profit?&quot;,
+    &quot;EligibilityForm_Nonprofit_EIN&quot;: { &quot;label&quot;: &quot;Non-Profit EIN&quot;, &quot;type&quot;: &quot;number&quot; },
+    &quot;EligibilityForm_AnnualOperatingBudget&quot;: { &quot;label&quot;: &quot;Annual Operating Budget&quot;, &quot;type&quot;: &quot;currency&quot; },
+    &quot;EligibilityForm_WorkforceDevExp&quot;: &quot;Does the organization have Workforce Development Experience?&quot;,
+    &quot;EligibilityForm_MinWageCompliance&quot;: &quot;Compliant with Minimum Wage Laws?&quot;,
+    &quot;EligibilityForm_PartnershipApp&quot;: &quot;Is this a Partnership Application?&quot;
+  },
+  &quot;MAEOED_ApplicantInformation_Step&quot;: {
+    &quot;_sectionTitle&quot;: &quot;Applicant Information&quot;,
+    &quot;_order&quot;: 2,
+    &quot;ApplicantInformation_OD_Block&quot;: {
+      &quot;_blockTitle&quot;: &quot;Organization Details&quot;,
+      &quot;_order&quot;: 1,
+      &quot;ApplicantInformation_OrgName&quot;: &quot;Organization Name&quot;,
+      &quot;ApplicantInformation_AnnualOperatingBudget&quot;: { &quot;label&quot;: &quot;Annual Operating Budget&quot;, &quot;type&quot;: &quot;currency&quot; },
+      &quot;ApplicantInformation_FiscalYearEnd&quot;: { &quot;label&quot;: &quot;Fiscal Year End Date&quot;, &quot;type&quot;: &quot;date&quot; },
+      &quot;ApplicantInformation_OrgDescription&quot;: &quot;Organization Description&quot;
+    },
+    &quot;ApplicantInformation_OC_Block&quot;: {
+      &quot;_blockTitle&quot;: &quot;Organization CEO&quot;,
+      &quot;_order&quot;: 2,
+      &quot;ApplicantInformation_CEOName&quot;: &quot;CEO/Executive Director Name&quot;,
+      &quot;ApplicantInformation_CEOTitle&quot;: &quot;CEO/Executive Director Title&quot;,
+      &quot;ApplicantInformation_CEOEmail&quot;: { &quot;label&quot;: &quot;CEO/Executive Director Email&quot;, &quot;type&quot;: &quot;email&quot; },
+      &quot;ApplicantInformation_CEOPhone&quot;: { &quot;label&quot;: &quot;CEO/Executive Director Phone&quot;, &quot;type&quot;: &quot;phone&quot; },
+      &quot;ApplicantInformation_CEOAddress-Block&quot;: {
+        &quot;_blockTitle&quot;: &quot;CEO Mailing Address&quot;,
+        &quot;ApplicantInformation_CEOAddress&quot;: &quot;CEO Full Address&quot;,
+        &quot;CEOAddress_Street&quot;: &quot;Street&quot;,
+        &quot;CEOAddress_City&quot;: &quot;City&quot;,
+        &quot;CEOAddress_State&quot;: &quot;State&quot;,
+        &quot;CEOAddress_Country&quot;: &quot;Country&quot;,
+        &quot;CEOAddress_ZipCode&quot;: &quot;Zip Code&quot;
+      }
+    },
+    &quot;ContactInfoBlock&quot;: {
+      &quot;_blockTitle&quot;: &quot;Contact Person&quot;,
+      &quot;_order&quot;: 3,
+      &quot;ApplicantInformation_ContactSameAsCEO&quot;: { &quot;label&quot;: &quot;Is the Primary Contact the same as the CEO?&quot;, &quot;type&quot;: &quot;boolean&quot; },
+      &quot;ApplicantInformation_ContactName&quot;: &quot;Primary Contact Name&quot;,
+      &quot;ApplicantInformation_ContactTitle&quot;: &quot;Primary Contact Title&quot;,
+      &quot;ApplicantInformation_ContactEmail&quot;: { &quot;label&quot;: &quot;Primary Contact Email&quot;, &quot;type&quot;: &quot;email&quot; },
+      &quot;ApplicantInformation_ContactPhone&quot;: { &quot;label&quot;: &quot;Primary Contact Phone&quot;, &quot;type&quot;: &quot;phone&quot; },
+      &quot;ApplicantInformation_ContactAddress-Block&quot;: {
+        &quot;_blockTitle&quot;: &quot;Contact Mailing Address&quot;,
+        &quot;ApplicantInformation_ContactAddress&quot;: &quot;Contact Full Address&quot;,
+        &quot;ContactAddress_Street&quot;: &quot;Street&quot;,
+        &quot;ContactAddress_City&quot;: &quot;City&quot;,
+        &quot;ContactAddress_State&quot;: &quot;State&quot;,
+        &quot;ContactAddress_Country&quot;: &quot;Country&quot;,
+        &quot;ContactAddress_ZipCode&quot;: &quot;Zip Code&quot;
+      }
+    }
+  },
+  &quot;MAEOED_ApplicationOverview_Step&quot;: {
+    &quot;_sectionTitle&quot;: &quot;Application Overview&quot;,
+    &quot;_order&quot;: 3,
+    &quot;ApplicationOverview_ProjectName&quot;: &quot;Project Name&quot;,
+    &quot;ApplicationOverview_ProjectType&quot;: &quot;Project Type&quot;,
+    &quot;ApplicationOverview_ProjectSummary&quot;: &quot;Project Summary&quot;,
+    &quot;ApplicationOverview_GrantRequestAmount&quot;: { &quot;label&quot;: &quot;Grant Request Amount&quot;, &quot;type&quot;: &quot;currency&quot; },
+    &quot;ApplicationOverview_LiteracyFocus&quot;: &quot;Literacy Focus Area&quot;,
+    &quot;ApplicationOverview_JobSkillAgeGroup&quot;: &quot;Target Age Group for Job Skills&quot;
+  },
+  &quot;MAEOED_GeographyTargetPopulation_Step&quot;: {
+    &quot;_sectionTitle&quot;: &quot;Geography &amp; Target Population&quot;,
+    &quot;_order&quot;: 4,
+    &quot;GeographyTargetPopulation_Municipality&quot;: &quot;Municipality&quot;,
+    &quot;GeographyTargetPopulation_Neighborhood&quot;: &quot;Target Neighborhood&quot;,
+    &quot;GeographyTargetPopulation_ServiceAddress-Block&quot;: {
+      &quot;_blockTitle&quot;: &quot;Service Location Address&quot;,
+      &quot;GeographyTargetPopulation_ServiceAddress&quot;: &quot;Service Location Full Address&quot;,
+      &quot;ServiceAddress_Street&quot;: &quot;Street&quot;,
+      &quot;ServiceAddress_City&quot;: &quot;City&quot;,
+      &quot;ServiceAddress_State&quot;: &quot;State&quot;,
+      &quot;ServiceAddress_Country&quot;: &quot;Country&quot;,
+      &quot;ServiceAddress_ZipCode&quot;: &quot;Zip Code&quot;
+    },
+    &quot;GeographyTargetPopulation_TargetPopDescription&quot;: &quot;Target Population Description&quot;,
+    &quot;GeographyTargetPopulation_TargetPopInvolvement&quot;: { &quot;label&quot;: &quot;Target Population Involvement&quot;, &quot;type&quot;: &quot;number&quot; },
+    &quot;GeographyTargetPopulation_EconomicNeed&quot;: &quot;Statement of Economic Need&quot;,
+    &quot;GeographyTargetPopulation_StrategyAdaptation&quot;: &quot;Strategy for Adaptation&quot;
+  },
+  &quot;MAEOED_PartnershipsCollaboration_Step&quot;: {
+    &quot;_sectionTitle&quot;: &quot;Partnerships &amp; Collaboration&quot;,
+    &quot;_order&quot;: 5,
+    &quot;PartnershipsCollaboration_PastCollabExists&quot;: &quot;Does Past Collaboration Exist?&quot;,
+    &quot;PartnershipsCollaboration_PartnerList&quot;: &quot;List of Partners&quot;,
+    &quot;PartnershipsCollaboration_PastProjectExamples&quot;: &quot;Examples of Past Projects&quot;,
+    &quot;PartnershipsCollaboration_PartnerFeedback&quot;: &quot;Partner Feedback Mechanism&quot;,
+    &quot;PartnershipsCollaboration_OutcomesList&quot;: {
+      &quot;_blockTitle&quot;: &quot;Outcomes&quot;,
+      &quot;_order&quot;: 1,
+      &quot;PartnershipsCollaboration_OutcomeDescriptions&quot;: &quot;Outcome Description&quot;,
+      &quot;PartnershipsCollaboration_OutcomeTargetPop&quot;: { &quot;label&quot;: &quot;Target Population Count&quot;, &quot;type&quot;: &quot;number&quot; },
+      &quot;PartnershipsCollaboration_OutcomeInterventions&quot;: &quot;Proposed Interventions&quot;,
+      &quot;PartnershipsCollaboration_OutcomeOutputs&quot;: &quot;Expected Outputs&quot;
+    },
+    &quot;PartnershipsCollaboration_EvaluationList&quot;: {
+      &quot;_blockTitle&quot;: &quot;Evaluation Plan&quot;,
+      &quot;_order&quot;: 2,
+      &quot;PartnershipsCollaboration_EvaluationType&quot;: &quot;Evaluation Type&quot;,
+      &quot;PartnershipsCollaboration_EvaluatorName&quot;: &quot;Evaluator Name&quot;,
+      &quot;PartnershipsCollaboration_EvalMethodology&quot;: &quot;Evaluation Methodology&quot;,
+      &quot;PartnershipsCollaboration_IsEvidenceBased&quot;: &quot;Is this Evidence Based?&quot;
+    },
+    &quot;PartnershipsCollaboration_TimelineList&quot;: {
+      &quot;_blockTitle&quot;: &quot;Project Timeline&quot;,
+      &quot;_order&quot;: 3,
+      &quot;PartnershipsCollaboration_TimelineMonth&quot;: { &quot;label&quot;: &quot;Timeline Month&quot;, &quot;type&quot;: &quot;date&quot; },
+      &quot;PartnershipsCollaboration_TimelineActivity&quot;: &quot;Planned Activity&quot;
+    }
+  }
+}</value>
+    </values>
+</CustomMetadata>

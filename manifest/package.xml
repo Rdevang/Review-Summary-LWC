@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
     <types>
+        <members>Form_Review_Config__mdt</members>
+        <name>CustomObject</name>
+    </types>
+    <types>
+        <members>Form_Review_Config__mdt.MAEOED_Proposal_Config</members>
+        <name>CustomMetadata</name>
+    </types>
+    <types>
         <members>intakeFormReviewSummary</members>
         <name>LightningComponentBundle</name>
     </types>

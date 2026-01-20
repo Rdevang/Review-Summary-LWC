@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Label_JSON__c</fullName>
+    <description>JSON configuration that defines which fields to display, their labels, section/block titles, and formatting types (phone, email, currency, date, boolean, number). The JSON structure determines the rendering order in the Review Summary component.</description>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <inlineHelpText>Enter valid JSON. Use _sectionTitle for section headers, _blockTitle for block headers. For explicit formatting, use object syntax: { &quot;label&quot;: &quot;Label&quot;, &quot;type&quot;: &quot;phone&quot; }</inlineHelpText>
+    <label>Label JSON</label>
+    <length>131072</length>
+    <type>LongTextArea</type>
+    <visibleLines>3</visibleLines>
+</CustomField>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Form_Type__c</fullName>
+    <description>Identifier for the form/application type this configuration applies to. Used to categorize and filter configurations (e.g., MAEOED\Proposal, License\_Application, Grant\_Request).</description>
+    <externalId>false</externalId>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <inlineHelpText>Enter a unique identifier for the form type (e.g., MAEOED\_Proposal)</inlineHelpText>
+    <label>Form Type</label>
+    <length>30</length>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>
