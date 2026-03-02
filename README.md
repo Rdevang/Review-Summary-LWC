@@ -26,13 +26,27 @@ A reusable Salesforce Lightning Web Component that dynamically renders a review 
 * **Array Tables**: Renders repeatable blocks as accessible data tables
 * **WCAG 2.1 AA Compliant**: Built with accessibility standards in mind
 
+### Related Components
+
+* **budgetDisplayReadOnly** — Read-only budget display LWC. Uses OmniStudio integration (`GrantsBudgetController.getBudgetDetail`) to fetch budget data; pass `recordId` (proposal Id). Use on Record Pages, App/Home pages, or Experience Cloud.
+* **GrantsBudgetController** — Apex class used by the budget display and OmniScript actions: `getBudgetDetail`, `upsertLineItem`, `deleteLineItem`. Implements `omnistudio.VlocityOpenInterface`.
+
 ## Project Structure
 
 ```
 force-app/main/default/
+├── classes/
+│   ├── GrantsBudgetController.cls
+│   └── GrantsBudgetController.cls-meta.xml
 ├── customMetadata/
-│   └── Form_Review_Config.MAEOED_Proposal_Config.md-meta.xml
+│   ├── Form_Review_Config.MAEOED_Proposal_Config.md-meta.xml
+│   └── Form_Review_Config.NB_Teacher_Certification_Config.md-meta.xml
 ├── lwc/
+│   ├── budgetDisplayReadOnly/
+│   │   ├── budgetDisplayReadOnly.html
+│   │   ├── budgetDisplayReadOnly.js
+│   │   ├── budgetDisplayReadOnly.css
+│   │   └── budgetDisplayReadOnly.js-meta.xml
 │   └── intakeFormReviewSummary/
 │       ├── intakeFormReviewSummary.html
 │       ├── intakeFormReviewSummary.js
@@ -47,8 +61,7 @@ force-app/main/default/
 │           ├── Is_Active__c.field-meta.xml
 │           └── Description__c.field-meta.xml
 ├── omniDataTransforms/
-│   ├── DRExtractLabelJSON_1.rpt-meta.xml
-│   └── DRExtractMAEOEDProposalData_1.rpt-meta.xml
+│   └── DRExtractLabelJSON_1.rpt-meta.xml
 └── omniScripts/
     └── POC_ReviewSummary_English_1.os-meta.xml
 ```
@@ -497,8 +510,12 @@ sf project deploy start -x manifest/package.xml -o <org-alias>
 ### Deploy Individual Components
 
 ```bash
-# LWC only
+# LWCs
 sf project deploy start -p force-app/main/default/lwc/intakeFormReviewSummary -o <org-alias>
+sf project deploy start -p force-app/main/default/lwc/budgetDisplayReadOnly -o <org-alias>
+
+# Apex (Budget display backend)
+sf project deploy start -p force-app/main/default/classes/GrantsBudgetController.cls -o <org-alias>
 
 # Custom Metadata Type
 sf project deploy start -p force-app/main/default/objects/Form_Review_Config__mdt -o <org-alias>
