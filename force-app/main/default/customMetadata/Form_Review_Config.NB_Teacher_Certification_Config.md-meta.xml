@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>SNB Teacher Certification Review Config</label>
+    <protected>false</protected>
+    <values>
+        <field>Description__c</field>
+        <value xsi:type="xsd:string">Stores label configuration JSON for the New Brunswick Teacher Certification Form Review Summary LWC. Controls field display, labels, formatting types, and display order.</value>
+    </values>
+    <values>
+        <field>Form_Type__c</field>
+        <value xsi:type="xsd:string">SNB Teacher Certification Form</value>
+    </values>
+    <values>
+        <field>Is_Active__c</field>
+        <value xsi:type="xsd:boolean">true</value>
+    </values>
+    <values>
+        <field>Label_JSON__c</field>
+        <value xsi:type="xsd:string">{
+  &quot;EligibilityRequirements&quot;: {
+    &quot;_sectionTitle&quot;: &quot;Eligibility Requirements&quot;,
+    &quot;_order&quot;: 1,
+    &quot;UniversityProgramCompleted&quot;: { &quot;label&quot;: &quot;University Program Completed&quot;, &quot;type&quot;: &quot;boolean&quot;, &quot;colspan&quot;: 6 },
+    &quot;CitizenshipVisaStatus&quot;: { &quot;label&quot;: &quot;Citizenship/Visa Status&quot;, &quot;colspan&quot;: 6 },
+    &quot;MajorCredits&quot;: { &quot;label&quot;: &quot;Major Credits&quot;, &quot;type&quot;: &quot;number&quot;, &quot;colspan&quot;: 6 },
+    &quot;MinorCredits&quot;: { &quot;label&quot;: &quot;Minor Credits&quot;, &quot;type&quot;: &quot;number&quot;, &quot;colspan&quot;: 6 }
+  },
+  &quot;PersonalInformation&quot;: {
+    &quot;_sectionTitle&quot;: &quot;Personal Information&quot;,
+    &quot;_order&quot;: 2,
+    &quot;FirstName&quot;: { &quot;label&quot;: &quot;First Name&quot;, &quot;colspan&quot;: 4 },
+    &quot;MiddleName&quot;: { &quot;label&quot;: &quot;Middle Name&quot;, &quot;colspan&quot;: 4 },
+    &quot;LastName&quot;: { &quot;label&quot;: &quot;Last Name&quot;, &quot;colspan&quot;: 4 },
+    &quot;MaidenName&quot;: { &quot;label&quot;: &quot;Maiden Name&quot;, &quot;colspan&quot;: 6 },
+    &quot;Gender&quot;: { &quot;label&quot;: &quot;Gender&quot;, &quot;colspan&quot;: 6 },
+    &quot;DateofBirth&quot;: { &quot;label&quot;: &quot;Date of Birth&quot;, &quot;type&quot;: &quot;date&quot;, &quot;colspan&quot;: 6 },
+    &quot;HomePhone&quot;: { &quot;label&quot;: &quot;Home Phone&quot;, &quot;type&quot;: &quot;phone&quot;, &quot;colspan&quot;: 4 },
+    &quot;CellPhone&quot;: { &quot;label&quot;: &quot;Cell Phone&quot;, &quot;type&quot;: &quot;phone&quot;, &quot;colspan&quot;: 4 },
+    &quot;WorkPhone&quot;: { &quot;label&quot;: &quot;Work Phone&quot;, &quot;type&quot;: &quot;phone&quot;, &quot;colspan&quot;: 4 },
+    &quot;EmailAddress&quot;: { &quot;label&quot;: &quot;Email Address&quot;, &quot;type&quot;: &quot;email&quot;, &quot;colspan&quot;: 12 },
+    &quot;MailingAddress-Block&quot;: {
+      &quot;_blockTitle&quot;: &quot;Mailing Address&quot;,
+      &quot;_order&quot;: 1,
+      &quot;MailingAddress&quot;: { &quot;label&quot;: &quot;Full Address&quot;, &quot;colspan&quot;: 12 },
+      &quot;Street&quot;: { &quot;label&quot;: &quot;Street&quot;, &quot;colspan&quot;: 12 },
+      &quot;City&quot;: { &quot;label&quot;: &quot;City&quot;, &quot;colspan&quot;: 4 },
+      &quot;State&quot;: { &quot;label&quot;: &quot;Province/State&quot;, &quot;colspan&quot;: 4 },
+      &quot;Postal Code&quot;: { &quot;label&quot;: &quot;Postal Code&quot;, &quot;colspan&quot;: 4 },
+      &quot;Country&quot;: { &quot;label&quot;: &quot;Country&quot;, &quot;colspan&quot;: 12 }
+    }
+  },
+  &quot;UniversityEducation&quot;: {
+    &quot;_sectionTitle&quot;: &quot;University Education&quot;,
+    &quot;_order&quot;: 3,
+    &quot;UniversityEducationEditBlock&quot;: {
+      &quot;_blockTitle&quot;: &quot;Education Records&quot;,
+      &quot;_order&quot;: 1,
+      &quot;Institution&quot;: { &quot;label&quot;: &quot;Institution&quot;, &quot;colspan&quot;: 6 },
+      &quot;Degree&quot;: { &quot;label&quot;: &quot;Degree&quot;, &quot;colspan&quot;: 6 },
+      &quot;GraduatingYear&quot;: { &quot;label&quot;: &quot;Graduating Year&quot;, &quot;type&quot;: &quot;number&quot;, &quot;colspan&quot;: 4 },
+      &quot;NumberofCredits&quot;: { &quot;label&quot;: &quot;Number of Credits&quot;, &quot;type&quot;: &quot;number&quot;, &quot;colspan&quot;: 4 },
+      &quot;Major&quot;: { &quot;label&quot;: &quot;Major Credits&quot;, &quot;type&quot;: &quot;number&quot;, &quot;colspan&quot;: 4 },
+      &quot;Minor&quot;: { &quot;label&quot;: &quot;Minor Credits&quot;, &quot;type&quot;: &quot;number&quot;, &quot;colspan&quot;: 4 }
+    }
+  },
+  &quot;InterimCertificationLevelRequested&quot;: {
+    &quot;_sectionTitle&quot;: &quot;Interim Certification Level Requested&quot;,
+    &quot;_order&quot;: 4,
+    &quot;Level4&quot;: { &quot;label&quot;: &quot;Level 4 Certification&quot;, &quot;type&quot;: &quot;boolean&quot;, &quot;colspan&quot;: 4 },
+    &quot;Level5&quot;: { &quot;label&quot;: &quot;Level 5 Certification&quot;, &quot;type&quot;: &quot;boolean&quot;, &quot;colspan&quot;: 4 },
+    &quot;Level6&quot;: { &quot;label&quot;: &quot;Level 6 Certification&quot;, &quot;type&quot;: &quot;boolean&quot;, &quot;colspan&quot;: 4 }
+  },
+  &quot;UploadDocuments&quot;: {
+    &quot;_sectionTitle&quot;: &quot;Document Upload&quot;,
+    &quot;_order&quot;: 5,
+    &quot;PathwaysReferenceNumber&quot;: { &quot;label&quot;: &quot;Pathways Reference Number&quot;, &quot;colspan&quot;: 6 },
+    &quot;AuthorizePathwaysReport&quot;: { &quot;label&quot;: &quot;Authorize Pathways Report&quot;, &quot;type&quot;: &quot;boolean&quot;, &quot;colspan&quot;: 6 }
+  },
+  &quot;Personal Background Information&quot;: {
+    &quot;_sectionTitle&quot;: &quot;Personal Background Information&quot;,
+    &quot;_order&quot;: 6,
+    &quot;Have you ever been certified or otherwise authorized to teach in any jurisdiction outside of New Brunswick?&quot;: { &quot;label&quot;: &quot;Certified to teach outside New Brunswick?&quot;, &quot;colspan&quot;: 12 },
+    &quot;Have you ever applied anywhere for authorization and/or certification to teach and had your application denied?\n&quot;: { &quot;label&quot;: &quot;Teaching certification application ever denied?&quot;, &quot;colspan&quot;: 12 },
+    &quot;Has your authorization and/or certification to teach ever been suspended or cancelled in another jurisdiction?\n&quot;: { &quot;label&quot;: &quot;Teaching certification ever suspended or cancelled?&quot;, &quot;colspan&quot;: 12 },
+    &quot;Have you ever, for any reason other than a failure to pay fees, voluntarily surrendered your authorization and/or certification to teach?\n&quot;: { &quot;label&quot;: &quot;Ever voluntarily surrendered teaching certification?&quot;, &quot;colspan&quot;: 12 },
+    &quot;Have you ever, in advance of an investigation or disciplinary proceeding, voluntarily restricted your teaching practice?\n&quot;: { &quot;label&quot;: &quot;Ever voluntarily restricted teaching practice?&quot;, &quot;colspan&quot;: 12 },
+    &quot;Have you ever been found guilty of professional misconduct or been found to be incompetent or incapacitated in relation to the teaching profession?\n&quot;: { &quot;label&quot;: &quot;Found guilty of professional misconduct?&quot;, &quot;colspan&quot;: 12 },
+    &quot;Has there ever been, or is there now, an investigation or proceeding with respect to your professional conduct, competence or capacity in relation to the teaching profession, including in your teacher education program?\n&quot;: { &quot;label&quot;: &quot;Any current or past investigations regarding professional conduct?&quot;, &quot;colspan&quot;: 12 },
+    &quot;Have you ever been asked by a teacher education program provider to withdraw from a teacher education program?\n&quot;: { &quot;label&quot;: &quot;Ever asked to withdraw from teacher education program?&quot;, &quot;colspan&quot;: 12 },
+    &quot;Have you ever been personally prevented from carrying on your occupation as a teacher as a result of any criminal, civil, or disciplinary proceeding?\n&quot;: { &quot;label&quot;: &quot;Ever prevented from teaching due to legal proceedings?&quot;, &quot;colspan&quot;: 12 },
+    &quot;Have you ever agreed to a settlement or resignation to avoid a proceeding or disciplinary action with respect to your professional conduct, competence, or capacity, in relation to either a teaching position or your professional certification?\n&quot;: { &quot;label&quot;: &quot;Ever settled/resigned to avoid disciplinary action?&quot;, &quot;colspan&quot;: 12 },
+    &quot;Have you ever been terminated or had restrictions imposed on your employment as a teacher by an employing school district, education authority, or other organization with respect to your conduct, competence, or capacity?\n&quot;: { &quot;label&quot;: &quot;Ever terminated or restricted as a teacher?&quot;, &quot;colspan&quot;: 12 },
+    &quot;Have you ever been subject to an investigation or proceeding relating to working with children or students in any professional capacity?\n&quot;: { &quot;label&quot;: &quot;Ever investigated for conduct with children/students?&quot;, &quot;colspan&quot;: 12 },
+    &quot;Is there any other information you know that may have a bearing on you being granted a teacher&apos;s certificate?\n&quot;: { &quot;label&quot;: &quot;Any other relevant information?&quot;, &quot;colspan&quot;: 12 }
+  }
+}</value>
+    </values>
+</CustomMetadata>

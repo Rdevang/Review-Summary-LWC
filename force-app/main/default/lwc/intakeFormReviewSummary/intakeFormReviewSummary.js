@@ -1,6 +1,19 @@
 import { LightningElement, api, track } from 'lwc';
 
 /**
+ * Config-driven synthetic sections. Budget step: embed c-budget-display-read-only (same omnistudio namespace; fetches via OmniScript action).
+ */
+const SECTION_CONFIG = {
+    BudgetStep: {
+        order: 4,
+        isVisible: true,
+        sectionTitle: 'Budget Review',
+        recordIdFields: ['recordId', 'proposalId', 'ProposalId', 'proposalID', 'Proposal__c', 'proposal__c'],
+        recordPageObject: 'Proposal__c'
+    }
+};
+
+/**
  * @description Utility LWC to display Review and Summary for intake forms
  *              Works on record pages and as custom LWC inside OmniStudio
  *              Handles nested objects and arrays dynamically
@@ -47,7 +60,6 @@ export default class IntakeFormReviewSummary extends LightningElement {
     _isInitialized = false;
 
     connectedCallback() {
-        // Only initialize if we have data; otherwise wait for renderedCallback
         if (this.omniJsonData || this.formData) {
             this.initializeData();
         }
@@ -66,7 +78,6 @@ export default class IntakeFormReviewSummary extends LightningElement {
                 this.initializeData();
             }
         } else if (!this._isInitialized && this.formData) {
-            // Fallback for record page with formData
             this.initializeData();
         }
     }
@@ -126,6 +137,10 @@ export default class IntakeFormReviewSummary extends LightningElement {
                     : this.labelData;
             }
 
+            // Debug: log resolved data JSON and label JSON
+            console.log('intakeFormReviewSummary – data JSON:', JSON.stringify(this._formData));
+            console.log('intakeFormReviewSummary – label JSON:', JSON.stringify(this._labelData));
+
             if (this._formData) {
                 this.processFormData();
             } else {
@@ -146,6 +161,7 @@ export default class IntakeFormReviewSummary extends LightningElement {
      * @description Process form data into sections for rendering
      * Only processes sections that have labels defined in labelData
      * Supports _order property for explicit ordering (handles DataRaptor order reversal)
+     * Injects config-driven synthetic sections (e.g. Budget Review) when visible and recordId available.
      */
     processFormData() {
         const sections = [];
@@ -190,7 +206,82 @@ export default class IntakeFormReviewSummary extends LightningElement {
         // Sort sections by _order property (ascending)
         sections.sort((a, b) => a.order - b.order);
 
+        // Inject config-driven synthetic sections (e.g. Budget Review)
+        const syntheticSections = this.buildSyntheticSections();
+        syntheticSections.forEach(s => sections.push(s));
+        sections.sort((a, b) => a.order - b.order);
+
         this.processedSections = sections;
+    }
+
+    /**
+     * @description Resolve record Id from form/omni data for a config key (e.g. BudgetStep).
+     * Tries recordIdFields at root of formData, then inside any step, then on full omniJsonData
+     * (OmniScript often puts recordId on the parent when formData is a nested object).
+     */
+    getRecordIdFromConfig(configKey) {
+        const config = SECTION_CONFIG[configKey];
+        if (!config || !config.recordIdFields) return null;
+
+        const tryData = (data) => {
+            if (!data || typeof data !== 'object') return null;
+            for (const field of config.recordIdFields) {
+                const val = data[field];
+                if (val !== undefined && val !== null && val !== '') {
+                    return typeof val === 'string' ? val.trim() : String(val);
+                }
+            }
+            return null;
+        };
+
+        // 1) Root of form data
+        if (this._formData) {
+            let id = tryData(this._formData);
+            if (id) return id;
+            // 2) Inside any step object
+            for (const key of Object.keys(this._formData)) {
+                const val = this._formData[key];
+                if (val && typeof val === 'object' && !Array.isArray(val)) {
+                    id = tryData(val);
+                    if (id) return id;
+                }
+            }
+        }
+
+        // 3) Full OmniScript payload (recordId often on parent when formData is nested)
+        if (this.omniJsonData) {
+            const id = tryData(this.omniJsonData);
+            if (id) return id;
+        }
+        return null;
+    }
+
+    /**
+     * @description Build synthetic sections from SECTION_CONFIG (e.g. Budget Review).
+     * Injects Budget step with recordId; summary embeds c-budget-display-read-only (same namespace).
+     */
+    buildSyntheticSections() {
+        const out = [];
+        for (const [sectionId, config] of Object.entries(SECTION_CONFIG)) {
+            if (!config.isVisible) continue;
+            const recordId = this.getRecordIdFromConfig(sectionId);
+            if (!recordId) continue;
+            out.push({
+                id: sectionId,
+                title: config.sectionTitle || sectionId,
+                contentId: `content-${sectionId}`,
+                isExpanded: true,
+                chevronIcon: 'utility:chevrondown',
+                order: config.order ?? 999,
+                showBudgetChild: true,
+                recordId: recordId,
+                blocks: [],
+                fields: [],
+                hasFields: false,
+                hasBlocks: false
+            });
+        }
+        return out;
     }
 
     /**

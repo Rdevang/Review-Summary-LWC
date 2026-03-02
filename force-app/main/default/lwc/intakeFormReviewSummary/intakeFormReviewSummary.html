@@ -53,76 +53,82 @@
                         <!-- Section Content -->
                         <template lwc:if={section.isExpanded}>
                             <div class="section-content" id={section.contentId}>
-                                <!-- Section Level Fields -->
-                                <template lwc:if={section.hasFields}>
-                                    <div class="field-grid">
-                                        <template for:each={section.fields} for:item="field">
-                                            <div key={field.id} class={field.spanClass}>
-                                                <div class="field-label">{field.label}</div>
-                                                <div class="field-value">{field.displayValue}</div>
-                                            </div>
-                                        </template>
-                                    </div>
+                                <!-- Budget Review: child LWC (same omnistudio namespace; fetches via OmniScript action) -->
+                                <template lwc:if={section.showBudgetChild}>
+                                    <c-budget-display-read-only record-id={section.recordId}></c-budget-display-read-only>
                                 </template>
-
-                                <!-- Blocks -->
-                                <template for:each={section.blocks} for:item="block">
-                                    <div key={block.id} class="block">
-                                        <div class="block-title">{block.title}</div>
-                                        
-                                        <!-- Array Block - Use Table -->
-                                        <template lwc:if={block.isArray}>
-                                            <div class="table-container">
-                                                <table class="data-table" role="grid" aria-label={block.title}>
-                                                    <thead>
-                                                        <tr>
-                                                            <th scope="col">#</th>
-                                                            <template for:each={block.columns} for:item="col">
-                                                                <th key={col.fieldName} scope="col">{col.label}</th>
-                                                            </template>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <template for:each={block.items} for:item="item">
-                                                            <tr key={item.id}>
-                                                                <td>{item.index}</td>
-                                                                <template for:each={item.fields} for:item="itemField">
-                                                                    <td key={itemField.id}>{itemField.displayValue}</td>
-                                                                </template>
-                                                            </tr>
-                                                        </template>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </template>
-
-                                        <!-- Regular Block -->
-                                        <template lwc:else>
-                                            <div class="field-grid">
-                                                <template for:each={block.fields} for:item="blockField">
-                                                    <div key={blockField.id} class={blockField.spanClass}>
-                                                        <div class="field-label">{blockField.label}</div>
-                                                        <div class="field-value">{blockField.displayValue}</div>
-                                                    </div>
-                                                </template>
-                                            </div>
-
-                                            <!-- Nested Blocks -->
-                                            <template for:each={block.nestedBlocks} for:item="nestedBlock">
-                                                <div key={nestedBlock.id} class="nested-block">
-                                                    <div class="nested-block-title">{nestedBlock.title}</div>
-                                                    <div class="field-grid">
-                                                        <template for:each={nestedBlock.fields} for:item="nestedField">
-                                                            <div key={nestedField.id} class={nestedField.spanClass}>
-                                                                <div class="field-label">{nestedField.label}</div>
-                                                                <div class="field-value">{nestedField.displayValue}</div>
-                                                            </div>
-                                                        </template>
-                                                    </div>
+                                <!-- Standard section fields and blocks -->
+                                <template lwc:else>
+                                <template lwc:if={section.hasFields}>
+                                        <div class="field-grid">
+                                            <template for:each={section.fields} for:item="field">
+                                                <div key={field.id} class={field.spanClass}>
+                                                    <div class="field-label">{field.label}</div>
+                                                    <div class="field-value">{field.displayValue}</div>
                                                 </div>
                                             </template>
-                                        </template>
-                                    </div>
+                                        </div>
+                                    </template>
+
+                                    <!-- Blocks -->
+                                    <template for:each={section.blocks} for:item="block">
+                                        <div key={block.id} class="block">
+                                            <div class="block-title">{block.title}</div>
+                                            
+                                            <!-- Array Block - Use Table -->
+                                            <template lwc:if={block.isArray}>
+                                                <div class="table-container">
+                                                    <table class="data-table" role="grid" aria-label={block.title}>
+                                                        <thead>
+                                                            <tr>
+                                                                <th scope="col">#</th>
+                                                                <template for:each={block.columns} for:item="col">
+                                                                    <th key={col.fieldName} scope="col">{col.label}</th>
+                                                                </template>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <template for:each={block.items} for:item="item">
+                                                                <tr key={item.id}>
+                                                                    <td>{item.index}</td>
+                                                                    <template for:each={item.fields} for:item="itemField">
+                                                                        <td key={itemField.id}>{itemField.displayValue}</td>
+                                                                    </template>
+                                                                </tr>
+                                                            </template>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </template>
+
+                                            <!-- Regular Block -->
+                                            <template lwc:else>
+                                                <div class="field-grid">
+                                                    <template for:each={block.fields} for:item="blockField">
+                                                        <div key={blockField.id} class={blockField.spanClass}>
+                                                            <div class="field-label">{blockField.label}</div>
+                                                            <div class="field-value">{blockField.displayValue}</div>
+                                                        </div>
+                                                    </template>
+                                                </div>
+
+                                                <!-- Nested Blocks -->
+                                                <template for:each={block.nestedBlocks} for:item="nestedBlock">
+                                                    <div key={nestedBlock.id} class="nested-block">
+                                                        <div class="nested-block-title">{nestedBlock.title}</div>
+                                                        <div class="field-grid">
+                                                            <template for:each={nestedBlock.fields} for:item="nestedField">
+                                                                <div key={nestedField.id} class={nestedField.spanClass}>
+                                                                    <div class="field-label">{nestedField.label}</div>
+                                                                    <div class="field-value">{nestedField.displayValue}</div>
+                                                                </div>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </template>
+                                        </div>
+                                    </template>
                                 </template>
                             </div>
                         </template>

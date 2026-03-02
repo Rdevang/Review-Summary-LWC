@@ -1,0 +1,12 @@
+/* Match grantsBudgetReviewOS: subtotal / total row styling */
+.subtotal-label {
+    padding-right: 1rem;
+}
+
+.sub-total {
+    padding-top: 1rem;
+}
+
+tr.sub-total {
+    border-top: 1px solid #e5e5e5;
+}

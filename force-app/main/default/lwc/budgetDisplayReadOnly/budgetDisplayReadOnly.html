@@ -1,0 +1,67 @@
+<template>
+    <div>
+        <template for:each={displayData} for:item="bud" for:index="topindex">
+            <!-- <p key={bud.templateId} class="heading slds-p-around_large">{bud.templateName}</p> -->
+            <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-p-horizontal_large slds-p-bottom_large slds-table_fixed-layout" key={bud.templateId} aria-label="Expense Budget">
+                <thead>
+                    <tr class="slds-line-height_reset">
+                        <th scope="col"><div class="slds-truncate" title="Category Of Expense">Categories</div></th>
+                        <th scope="col"><div class="slds-truncate" title="Description">Description</div></th>
+                        <th scope="col"><div class="slds-truncate" title="Grant Funded">Amount</div></th>
+                        <th scope="col"><div class="slds-truncate" title="Total Budgeted">Total Budget</div></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template for:each={bud.budgetList} for:item="budget" for:index="index">
+                        <tr class="slds-hint-parent" key={budget.Id}>
+                            <td colspan="4">
+                                <div class="slds-truncate budget-name" title="Budget Name"><b>{budget.Name}</b></div>
+                            </td>
+                        </tr>
+                        <template for:each={budget.Budget_Line_Items__r.records} for:item="budgetLineItem" for:index="lineItemIndex">
+                            <tr key={budgetLineItem.Id} class="slds-hint-parent">
+                                <td data-label="Categories"><div class="slds-truncate" title={budgetLineItem.Name}>{budgetLineItem.Name}</div></td>
+                                <td data-label="Description"><div class="slds-truncate" title={budgetLineItem.Description__c}>{budgetLineItem.Description__c}</div></td>
+                                <td data-label="Amount">
+                                    <lightning-formatted-number value={budgetLineItem.Grant_Funded__c} format-style="currency" currency-code="USD" class="slds-align_absolute-center"></lightning-formatted-number>
+                                </td>
+                                <td data-label="Total Budget">
+                                    <lightning-formatted-number value={budgetLineItem.Total_Budget__c} format-style="currency" currency-code="USD" class="slds-align_absolute-center"></lightning-formatted-number>
+                                </td>
+                            </tr>
+                        </template>
+                        <tr class="slds-hint-parent sub-total" key={budget.Id}>
+                            <td class="subtotal-label"><div class="slds-truncate" title="Subtotal">Subtotal</div></td>
+                            <td></td>
+                            <td>
+                                <lightning-formatted-number value={budget.Total_Grant_Funded__c} format-style="currency" currency-code="USD" class="slds-align_absolute-center"></lightning-formatted-number>
+                            </td>
+                            <td>
+                                <b><lightning-formatted-number value={budget.Total_Budgeted__c} format-style="currency" currency-code="USD" class="slds-align_absolute-center"></lightning-formatted-number></b>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+            <table class="slds-table slds-table_cell-buffer slds-table_bordered total-expense-budget slds-p-horizontal_large slds-p-bottom_large slds-table_fixed-layout" key={bud.templateId} aria-label="Total Expense Budget">
+                <tbody>
+                    <tr class="slds-hint-parent total-expense">
+                        <td><div class="slds-truncate" title="Subtotal">Total Expense Budget</div></td>
+                        <td></td>
+                        <td>
+                            <lightning-formatted-number value={bud.totalGrantFunded} format-style="currency" currency-code="USD" class="slds-align_absolute-center"></lightning-formatted-number>
+                        </td>
+                        <td>
+                            <b><lightning-formatted-number value={bud.totalBudgeted} format-style="currency" currency-code="USD" class="slds-align_absolute-center"></lightning-formatted-number></b>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </template>
+        <template if:true={showError}>
+            <div class="slds-box">
+                <div class="slds-align_absolute-center">No Budget Record Found for this Proposal</div>
+            </div>
+        </template>
+    </div>
+</template>

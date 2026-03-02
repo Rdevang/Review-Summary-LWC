@@ -5,6 +5,9 @@ A reusable Salesforce Lightning Web Component that dynamically renders a review 
 ## Table of Contents
 
 * [Features](#features)
+* [Related Components](#related-components)
+* [Budget Display Component](#budget-display-component)
+* [GrantsBudgetController](#grantsbudgetcontroller)
 * [Project Structure](#project-structure)
 * [Quick Start](#quick-start)
 * [Step\-by\-Step Setup Guide](#step-by-step-setup-guide)
@@ -28,8 +31,103 @@ A reusable Salesforce Lightning Web Component that dynamically renders a review 
 
 ### Related Components
 
-* **budgetDisplayReadOnly** — Read-only budget display LWC. Uses OmniStudio integration (`GrantsBudgetController.getBudgetDetail`) to fetch budget data; pass `recordId` (proposal Id). Use on Record Pages, App/Home pages, or Experience Cloud.
-* **GrantsBudgetController** — Apex class used by the budget display and OmniScript actions: `getBudgetDetail`, `upsertLineItem`, `deleteLineItem`. Implements `omnistudio.VlocityOpenInterface`.
+| Component | Purpose |
+|:---------|:--------|
+| **intakeFormReviewSummary** | Review/summary view for intake forms; label\-driven, OmniScript + Record Page. |
+| **budgetDisplayReadOnly** | Read\-only budget display; fetches data via `GrantsBudgetController.getBudgetDetail`. |
+| **GrantsBudgetController** | Apex backend for budget data and line\-item CRUD; used by OmniScript and budget LWC. |
+
+---
+
+## Budget Display Component
+
+The **Budget Display (Read Only)** LWC (`budgetDisplayReadOnly`) shows grant budget and line items in a read\-only layout. It uses the OmniStudio action framework to call `GrantsBudgetController.getBudgetDetail`, so it works in both Lightning and Experience Cloud without direct Apex wiring.
+
+### What It Does
+
+* Fetches budget data for a **Proposal** (record Id).
+* Displays budget templates, line items, and totals (Grant Funded, Match Funds, Other Funds, Total Budgeted).
+* Shows an error state when no data is found or the request fails.
+
+### Where You Can Use It
+
+| Context | How |
+|:--------|:----|
+| **Record Page** | Add the component to a Proposal record page; set **Record Id** to the page\'s record (or a custom property). |
+| **App / Home Page** | Add the component and pass **Record Id** from a property or URL parameter. |
+| **Experience Cloud** | Use on a community page; pass the Proposal Id via **Record Id**. |
+| **OmniScript** | Use as a Custom LWC step; pass `recordId` from OmniScript data (e.g. `%recordId%` or `%ContextId%`). |
+
+### How to Use
+
+1. **Deploy the LWC and Apex**
+   ```bash
+   sf project deploy start -p force-app/main/default/lwc/budgetDisplayReadOnly -o <org-alias>
+   sf project deploy start -p force-app/main/default/classes/GrantsBudgetController.cls -o <org-alias>
+   ```
+
+2. **Add to a Record Page (Proposal)**
+   * Edit the Proposal record page → **Components** → find **Budget Display (Read Only)** (under Custom or OmniStudio).
+   * Drag it onto the page.
+   * Set **Record Id** to **Record Id** (current record) or a custom value.
+
+3. **Add in OmniScript**
+   * In your OmniScript, add a step and insert the Custom LWC **budgetDisplayReadOnly**.
+   * In the LWC properties, set **Record Id** to the proposal Id (e.g. `%recordId%` or the key that holds the Proposal Id).
+
+### Required Property
+
+| Property | Type | Required | Description |
+|:---------|:-----|:---------|:------------|
+| `recordId` | String (Id) | Yes | Proposal record Id. Used to call `GrantsBudgetController.getBudgetDetail`. |
+
+### How It Fetches Data
+
+The component uses `OmniscriptActionCommonUtil.executeAction()` with:
+
+* **sClassName**: `GrantsBudgetController`
+* **sMethodName**: `getBudgetDetail`
+* **input**: `{ "proposal": "<recordId>" }`
+
+The controller returns JSON in `budgetInfo` (array of budget wrappers with `templateName`, `budgetList`, line items, and totals). The LWC processes this and renders the read\-only table.
+
+### Dependencies
+
+* **GrantsBudgetController** must be deployed and the org must have the objects it queries: `Proposal__c`, `Budget__c`, `Budget_Line_Item__c`, `Budget_Template__c`. The controller also references **GrantsUtility** and **GrantsLiteralConstant** (not in this repo); ensure those exist in the org for line\-item upsert/delete if you use those methods elsewhere.
+
+---
+
+## GrantsBudgetController
+
+**GrantsBudgetController** is an Apex class that provides budget data and budget line\-item operations. It implements **omnistudio.VlocityOpenInterface** for OmniStudio integration and exposes `@AuraEnabled` methods for direct use.
+
+### Methods
+
+| Method | Usage | Description |
+|:-------|:------|:------------|
+| **getBudgetDetail** | OmniScript / LWC | Invoked via `invokeMethod`. Input: `inputMap.proposal` (Proposal Id). Returns JSON string in `outMap.budgetInfo` with budget templates and line items. |
+| **getBudgets** | Apex / LWC | `@AuraEnabled`. Accepts Proposal Id; queries `Proposal__c`, `Budget__c`, `Budget_Line_Item__c`, `Budget_Template__c` and returns serialized list of budget wrappers. |
+| **upsertLineItem** | OmniScript / Apex | `@AuraEnabled`. Input: JSON string of `Budget_Line_Item__c`. Inserts or updates with **GrantsUtility** / FLS; returns new/updated record Id. |
+| **deleteLineItem** | OmniScript / Apex | `@AuraEnabled`. Input: JSON string of `Budget_Line_Item__c` (with Id). Deletes the line item. |
+
+### OmniStudio Integration
+
+For OmniScript or LWCs using `OmniscriptActionCommonUtil`:
+
+* **getBudgetDetail**: `inputMap.proposal` = Proposal Id → response in `outMap.budgetInfo`.
+* **upsertLineItem**: `options.lineitem` = JSON of `Budget_Line_Item__c` → new/updated Id in `outMap.recordId`.
+* **deleteLineItem**: `options.lineitem` = JSON of `Budget_Line_Item__c` (with Id).
+
+### Org Dependencies
+
+The controller expects these in the org (not included in this repo):
+
+* **Objects**: `Proposal__c`, `Budget__c`, `Budget_Line_Item__c`, `Budget_Template__c` with the fields referenced in the SOQL.
+* **Classes**: `GrantsUtility`, `GrantsLiteralConstant` (for FLS and DML used by `upsertLineItem`).
+
+The **budgetDisplayReadOnly** LWC only calls **getBudgetDetail** / **getBudgets**; it does not call upsert or delete. Deploy **GrantsBudgetController** with this repo; ensure **GrantsUtility** and **GrantsLiteralConstant** (and the custom objects) are present in the same org.
+
+---
 
 ## Project Structure
 
@@ -130,6 +228,8 @@ sf project deploy start -p force-app/main/default/objects/Form_Review_Config__md
    * **Is Active**: ✅ Checked
    * **Label JSON**: *(paste your labelData JSON \- see format below)*
 4. Click **Save**
+
+**Configs included in this repo:** You can deploy the two sample configs from `force-app/main/default/customMetadata/` — **MAEOED_Proposal_Config** (MA EOED Intake Form) and **NB_Teacher_Certification_Config** (SNB Teacher Certification Form). Create additional records for other form types and paste the matching labelData JSON.
 
 ### Step 4: Create DataRaptor to Fetch Label Config
 
@@ -501,6 +601,16 @@ colspan: 3 (quarter width)
 
 ## Deployment
 
+### Package Contents (manifest/package.xml)
+
+| Type | Members |
+|:-----|:--------|
+| **ApexClass** | GrantsBudgetController |
+| **CustomObject** | Form_Review_Config__mdt |
+| **CustomMetadata** | Form_Review_Config.MAEOED_Proposal_Config, Form_Review_Config.NB_Teacher_Certification_Config |
+| **LightningComponentBundle** | budgetDisplayReadOnly, intakeFormReviewSummary |
+| **OmniScript** | POC_ReviewSummary_English_1 |
+
 ### Deploy All Components
 
 ```bash
@@ -585,6 +695,15 @@ sf project retrieve start -x manifest/package.xml -o <org-alias>
   "amount": { "label": "Amount", "type": "currency" }
 }
 ```
+
+### Budget Display Shows Error or No Data
+
+**Cause**: Missing `recordId`, invalid Proposal Id, or org missing budget objects / GrantsBudgetController dependencies.
+
+**Solution**:
+* Ensure **Record Id** is set to a valid Proposal record Id.
+* Deploy **GrantsBudgetController** and confirm the org has **Proposal__c**, **Budget__c**, **Budget_Line_Item__c**, **Budget_Template__c** (and **GrantsUtility** / **GrantsLiteralConstant** if you use upsert/delete elsewhere).
+* In OmniScript, ensure the property is bound to the correct key (e.g. `%recordId%` or `%ContextId%`).
 
 ---
 

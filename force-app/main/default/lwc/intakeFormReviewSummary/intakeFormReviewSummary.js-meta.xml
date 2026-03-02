@@ -3,6 +3,8 @@
     <apiVersion>52.0</apiVersion>
     <isExposed>true</isExposed>
     <masterLabel>Intake Form Review Summary</masterLabel>
+    <runtimeNamespace>omnistudio</runtimeNamespace>
+
     <description>Utility LWC to display Review and Summary for intake forms. Works on record pages and as custom LWC inside OmniStudio.</description>
     <targets>
         <target>lightning__RecordPage</target>
