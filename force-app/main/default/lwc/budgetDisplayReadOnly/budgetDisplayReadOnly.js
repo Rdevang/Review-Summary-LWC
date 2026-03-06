@@ -3,7 +3,8 @@ import { OmniscriptActionCommonUtil } from 'omnistudio/omniscriptActionUtils';
 
 /**
  * Read-only budget display. Fetches budget via OmniscriptActionCommonUtil (no @salesforce/apex)
- * so it works with runtimeNamespace omnistudio. Pass recordId (proposal id) to load data.
+ * so it works with runtimeNamespace omnistudio. Uses IntakeFormReviewSummaryController.getBudgetDetail.
+ * Pass recordId (proposal id) or it is read from URL param c__proposal.
  */
 export default class BudgetDisplayReadOnly extends LightningElement {
     _recordId;
@@ -20,6 +21,7 @@ export default class BudgetDisplayReadOnly extends LightningElement {
     _actionUtil;
     @track _displayData = [];
     _showError = false;
+    _errorMessage = '';
 
     get displayData() {
         return this._displayData;
@@ -27,10 +29,18 @@ export default class BudgetDisplayReadOnly extends LightningElement {
     get showError() {
         return this._showError;
     }
+    get errorMessage() {
+        return this._errorMessage;
+    }
 
     connectedCallback() {
         this._actionUtil = new OmniscriptActionCommonUtil();
-        if (this.recordId) {
+        if (!this._recordId || this._recordId === '') {
+            const urlParams = new URLSearchParams(window.location.search);
+            const proposalId = urlParams.get('c__proposal');
+            if (proposalId) this._recordId = proposalId.trim();
+        }
+        if (this._recordId) {
             this.getBudgetDetails();
         }
     }
@@ -39,20 +49,31 @@ export default class BudgetDisplayReadOnly extends LightningElement {
         if (!this.recordId || !this._actionUtil) return;
         const params = {
             input: JSON.stringify({ proposal: this.recordId }),
-            sClassName: 'GrantsBudgetController',
+            sClassName: 'IntakeFormReviewSummaryController',
             sMethodName: 'getBudgetDetail',
             options: '{}'
         };
         this._actionUtil
             .executeAction(params, null, this, null, null)
             .then((response) => {
-                const raw = response && response.result && response.result.budgetInfo
-                    ? JSON.parse(response.result.budgetInfo)
-                    : [];
+                const result = response && response.result;
+                const budgetInfoStr = result && result.budgetInfo;
+                const raw = budgetInfoStr ? JSON.parse(budgetInfoStr) : [];
                 this._displayData = Array.isArray(raw) && raw.length ? this.processBudgetData(raw) : [];
                 this._showError = !this._displayData || this._displayData.length === 0;
+                if (this._showError) {
+                    this._errorMessage = (result && (result.error || result.message)) || 'No budget data found.';
+                    console.log('budgetDisplayReadOnly errorMessage:', this._errorMessage);
+                    if (!budgetInfoStr || (Array.isArray(raw) && raw.length === 0)) {
+                        console.log('budgetDisplayReadOnly response.result:', JSON.stringify(result));
+                    }
+                } else {
+                    this._errorMessage = '';
+                }
             })
             .catch((err) => {
+                this._errorMessage = (err && (err.message || err.body?.message)) || String(err);
+                console.log('budgetDisplayReadOnly errorMessage:', this._errorMessage);
                 console.error('Budget load error:', err);
                 this._displayData = [];
                 this._showError = true;

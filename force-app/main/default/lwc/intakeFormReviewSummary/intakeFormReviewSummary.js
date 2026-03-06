@@ -2,12 +2,20 @@ import { LightningElement, api, track } from 'lwc';
 
 /**
  * Config-driven synthetic sections. Budget step: embed c-budget-display-read-only (same omnistudio namespace; fetches via OmniScript action).
+ * Document step: embed c-document-display-read-only (same pattern).
  */
 const SECTION_CONFIG = {
     BudgetStep: {
-        order: 4,
+        order: 4.5,
         isVisible: true,
         sectionTitle: 'Budget Review',
+        recordIdFields: ['recordId', 'proposalId', 'ProposalId', 'proposalID', 'Proposal__c', 'proposal__c'],
+        recordPageObject: 'Proposal__c'
+    },
+    DocumentStep: {
+        order: 4.6,
+        isVisible: true,
+        sectionTitle: 'Document Review',
         recordIdFields: ['recordId', 'proposalId', 'ProposalId', 'proposalID', 'Proposal__c', 'proposal__c'],
         recordPageObject: 'Proposal__c'
     }
@@ -159,9 +167,9 @@ export default class IntakeFormReviewSummary extends LightningElement {
 
     /**
      * @description Process form data into sections for rendering
-     * Only processes sections that have labels defined in labelData
-     * Supports _order property for explicit ordering (handles DataRaptor order reversal)
-     * Injects config-driven synthetic sections (e.g. Budget Review) when visible and recordId available.
+     * Only processes sections that have labels defined in labelData.
+     * Section order: form sections use labelData _order; synthetic sections (Budget, Document) use SECTION_CONFIG order.
+     * All sections are combined and sorted by order (ascending)—no insert-by-index logic.
      */
     processFormData() {
         const sections = [];
@@ -206,10 +214,13 @@ export default class IntakeFormReviewSummary extends LightningElement {
         // Sort sections by _order property (ascending)
         sections.sort((a, b) => a.order - b.order);
 
-        // Inject config-driven synthetic sections (e.g. Budget Review)
+        // Add synthetic sections (Budget Review, Document Review) and re-sort so order is
+        // strictly from SECTION_CONFIG (synthetic) and labelData _order (form). No insert-by-index.
         const syntheticSections = this.buildSyntheticSections();
-        syntheticSections.forEach(s => sections.push(s));
-        sections.sort((a, b) => a.order - b.order);
+        if (syntheticSections.length > 0) {
+            sections.push(...syntheticSections);
+            sections.sort((a, b) => a.order - b.order);
+        }
 
         this.processedSections = sections;
     }
@@ -257,8 +268,8 @@ export default class IntakeFormReviewSummary extends LightningElement {
     }
 
     /**
-     * @description Build synthetic sections from SECTION_CONFIG (e.g. Budget Review).
-     * Injects Budget step with recordId; summary embeds c-budget-display-read-only (same namespace).
+     * @description Build synthetic sections from SECTION_CONFIG (e.g. Budget Review, Document Review).
+     * Injects steps with recordId; summary embeds child LWCs (c-budget-display-read-only, c-document-display-read-only).
      */
     buildSyntheticSections() {
         const out = [];
@@ -266,6 +277,8 @@ export default class IntakeFormReviewSummary extends LightningElement {
             if (!config.isVisible) continue;
             const recordId = this.getRecordIdFromConfig(sectionId);
             if (!recordId) continue;
+            const isBudget = sectionId === 'BudgetStep';
+            const isDocument = sectionId === 'DocumentStep';
             out.push({
                 id: sectionId,
                 title: config.sectionTitle || sectionId,
@@ -273,7 +286,8 @@ export default class IntakeFormReviewSummary extends LightningElement {
                 isExpanded: true,
                 chevronIcon: 'utility:chevrondown',
                 order: config.order ?? 999,
-                showBudgetChild: true,
+                showBudgetChild: isBudget,
+                showDocumentChild: isDocument,
                 recordId: recordId,
                 blocks: [],
                 fields: [],

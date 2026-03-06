@@ -7,8 +7,8 @@
                     <tr class="slds-line-height_reset">
                         <th scope="col"><div class="slds-truncate" title="Category Of Expense">Categories</div></th>
                         <th scope="col"><div class="slds-truncate" title="Description">Description</div></th>
-                        <th scope="col"><div class="slds-truncate" title="Grant Funded">Amount</div></th>
-                        <th scope="col"><div class="slds-truncate" title="Total Budgeted">Total Budget</div></th>
+                        <th scope="col" class="slds-text-align_right"><div class="slds-truncate" title="Grant Funded">Amount</div></th>
+                        <th scope="col" class="slds-text-align_right"><div class="slds-truncate" title="Total Budgeted">Total Budget</div></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -22,22 +22,22 @@
                             <tr key={budgetLineItem.Id} class="slds-hint-parent">
                                 <td data-label="Categories"><div class="slds-truncate" title={budgetLineItem.Name}>{budgetLineItem.Name}</div></td>
                                 <td data-label="Description"><div class="slds-truncate" title={budgetLineItem.Description__c}>{budgetLineItem.Description__c}</div></td>
-                                <td data-label="Amount">
-                                    <lightning-formatted-number value={budgetLineItem.Grant_Funded__c} format-style="currency" currency-code="USD" class="slds-align_absolute-center"></lightning-formatted-number>
+                                <td data-label="Amount" class="slds-text-align_right">
+                                    <lightning-formatted-number value={budgetLineItem.Grant_Funded__c} format-style="currency" currency-code="USD"></lightning-formatted-number>
                                 </td>
-                                <td data-label="Total Budget">
-                                    <lightning-formatted-number value={budgetLineItem.Total_Budget__c} format-style="currency" currency-code="USD" class="slds-align_absolute-center"></lightning-formatted-number>
+                                <td data-label="Total Budget" class="slds-text-align_right">
+                                    <lightning-formatted-number value={budgetLineItem.Total_Budget__c} format-style="currency" currency-code="USD"></lightning-formatted-number>
                                 </td>
                             </tr>
                         </template>
                         <tr class="slds-hint-parent sub-total" key={budget.Id}>
                             <td class="subtotal-label"><div class="slds-truncate" title="Subtotal">Subtotal</div></td>
                             <td></td>
-                            <td>
-                                <lightning-formatted-number value={budget.Total_Grant_Funded__c} format-style="currency" currency-code="USD" class="slds-align_absolute-center"></lightning-formatted-number>
+                            <td class="slds-text-align_right">
+                                <lightning-formatted-number value={budget.Total_Grant_Funded__c} format-style="currency" currency-code="USD"></lightning-formatted-number>
                             </td>
-                            <td>
-                                <b><lightning-formatted-number value={budget.Total_Budgeted__c} format-style="currency" currency-code="USD" class="slds-align_absolute-center"></lightning-formatted-number></b>
+                            <td class="slds-text-align_right">
+                                <b><lightning-formatted-number value={budget.Total_Budgeted__c} format-style="currency" currency-code="USD"></lightning-formatted-number></b>
                             </td>
                         </tr>
                     </template>
@@ -48,11 +48,11 @@
                     <tr class="slds-hint-parent total-expense">
                         <td><div class="slds-truncate" title="Subtotal">Total Expense Budget</div></td>
                         <td></td>
-                        <td>
-                            <lightning-formatted-number value={bud.totalGrantFunded} format-style="currency" currency-code="USD" class="slds-align_absolute-center"></lightning-formatted-number>
+                        <td class="slds-text-align_right">
+                            <lightning-formatted-number value={bud.totalGrantFunded} format-style="currency" currency-code="USD"></lightning-formatted-number>
                         </td>
-                        <td>
-                            <b><lightning-formatted-number value={bud.totalBudgeted} format-style="currency" currency-code="USD" class="slds-align_absolute-center"></lightning-formatted-number></b>
+                        <td class="slds-text-align_right">
+                            <b><lightning-formatted-number value={bud.totalBudgeted} format-style="currency" currency-code="USD"></lightning-formatted-number></b>
                         </td>
                     </tr>
                 </tbody>

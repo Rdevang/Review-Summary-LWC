@@ -57,6 +57,10 @@
                                 <template lwc:if={section.showBudgetChild}>
                                     <c-budget-display-read-only record-id={section.recordId}></c-budget-display-read-only>
                                 </template>
+                                <!-- Document Review: child LWC (read-only document list) -->
+                                <template lwc:elseif={section.showDocumentChild}>
+                                    <c-document-display-read-only record-id={section.recordId}></c-document-display-read-only>
+                                </template>
                                 <!-- Standard section fields and blocks -->
                                 <template lwc:else>
                                 <template lwc:if={section.hasFields}>

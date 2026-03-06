@@ -1,0 +1,79 @@
+<template>
+    <div class="document-review">
+        <template lwc:if={isLoading}>
+            <div class="slds-align_absolute-center slds-p-around_medium">
+                <lightning-spinner size="medium" alternative-text="Loading documents..."></lightning-spinner>
+            </div>
+        </template>
+        <template lwc:elseif={showError}>
+            <div class="slds-box slds-align_absolute-center doc-error">
+                <lightning-icon icon-name="utility:info" size="small" class="slds-m-right_x-small"></lightning-icon>
+                <span>{errorMessage}</span>
+            </div>
+        </template>
+        <template lwc:else>
+            <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_fixed-layout doc-table" aria-label="Documents">
+                <thead>
+                    <tr class="slds-line-height_reset">
+                        <th scope="col"><div class="slds-truncate" title="Document Name">Document Name</div></th>
+                        <th scope="col"><div class="slds-truncate" title="Status">Status</div></th>
+                        <th scope="col"><div class="slds-truncate" title="Submitted Date">Submitted Date</div></th>
+                        <th scope="col"><div class="slds-truncate" title="View">View</div></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template for:each={documents} for:item="doc">
+                        <tr class="slds-hint-parent" key={doc.documentRecord.Id}>
+                            <td data-label="Document Name" scope="row">
+                                <div class="slds-truncate" title={doc.documentRecord.Document_Title__c}>
+                                    {doc.documentRecord.Document_Title__c}
+                                    <template lwc:if={doc.documentRecord.Mandatory_by_default__c}>
+                                        <span class="slds-text-color_destructive">*</span>
+                                    </template>
+                                </div>
+                            </td>
+                            <td data-label="Status">
+                                <div class="slds-truncate" title={doc.documentRecord.Status__c}>{doc.documentRecord.Status__c}</div>
+                            </td>
+                            <td data-label="Submitted Date">
+                                <template lwc:if={doc.documentRecord.Submitted_Date__c}>
+                                    <lightning-formatted-date-time
+                                        value={doc.documentRecord.Submitted_Date__c}
+                                        year="numeric"
+                                        month="numeric"
+                                        day="numeric">
+                                    </lightning-formatted-date-time>
+                                </template>
+                                <template lwc:else>—</template>
+                            </td>
+                            <td data-label="View">
+                                <template lwc:if={doc.contentDocumentId}>
+                                    <lightning-button-icon
+                                        icon-name="utility:preview"
+                                        alternative-text="Preview"
+                                        title="Preview"
+                                        data-contentdocumentid={doc.contentDocumentId}
+                                        onclick={handlePreview}
+                                        class="slds-m-right_x-small">
+                                    </lightning-button-icon>
+                                </template>
+                                <template lwc:if={doc.latestVersionId}>
+                                    <lightning-button-icon
+                                        icon-name="utility:download"
+                                        alternative-text="Download"
+                                        title="Download"
+                                        data-versionid={doc.latestVersionId}
+                                        onclick={handleDownload}>
+                                    </lightning-button-icon>
+                                </template>
+                                <template lwc:if={doc.docNoView}>
+                                    <span class="slds-text-color_weak">—</span>
+                                </template>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </template>
+    </div>
+</template>

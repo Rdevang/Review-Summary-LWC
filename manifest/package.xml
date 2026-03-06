@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
     <types>
-        <members>GrantsBudgetController</members>
+        <members>IntakeFormReviewSummaryController</members>
         <name>ApexClass</name>
     </types>
     <types>
@@ -15,11 +15,12 @@
     </types>
     <types>
         <members>budgetDisplayReadOnly</members>
+        <members>documentDisplayReadOnly</members>
         <members>intakeFormReviewSummary</members>
         <name>LightningComponentBundle</name>
     </types>
     <types>
-        <members>POC_ReviewSummary_English_1</members>
+        <members>POC_reviewsummary_English_2</members>
         <name>OmniScript</name>
     </types>
     <version>65.0</version>
