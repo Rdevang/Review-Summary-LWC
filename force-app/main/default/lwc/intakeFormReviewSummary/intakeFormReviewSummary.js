@@ -145,10 +145,6 @@ export default class IntakeFormReviewSummary extends LightningElement {
                     : this.labelData;
             }
 
-            // Debug: log resolved data JSON and label JSON
-            console.log('intakeFormReviewSummary – data JSON:', JSON.stringify(this._formData));
-            console.log('intakeFormReviewSummary – label JSON:', JSON.stringify(this._labelData));
-
             if (this._formData) {
                 this.processFormData();
             } else {
@@ -184,8 +180,8 @@ export default class IntakeFormReviewSummary extends LightningElement {
             let value = this._formData[key];
             const labelInfo = this._labelData[key];
 
-            // Skip if no corresponding data exists
-            if (value === undefined || value === null) continue;
+            // Skip if labelInfo is not a section (e.g. internal keys)
+            if (!labelInfo || typeof labelInfo !== 'object') continue;
 
             // Parse JSON string if the value is a string (from Long Text Area fields)
             if (typeof value === 'string') {
@@ -193,16 +189,20 @@ export default class IntakeFormReviewSummary extends LightningElement {
                     value = JSON.parse(value);
                 } catch (e) {
                     console.warn(`Failed to parse JSON for section ${key}:`, e);
-                    continue;
+                    value = undefined;
                 }
+            }
+
+            // When value is missing (e.g. internal user OmniScript only passed labelData, not step data),
+            // still add a section so the header appears; processSection with empty object yields section with no blocks/fields
+            if (value === undefined || value === null) {
+                value = {};
             }
 
             // Process based on value type
             if (this.isObject(value) && !Array.isArray(value)) {
-                // It's a section/step with nested content
                 const section = this.processSection(key, value, labelInfo);
                 if (section) {
-                    // Add order from labelInfo if specified
                     section.order = (labelInfo && typeof labelInfo._order === 'number')
                         ? labelInfo._order
                         : 999;
@@ -361,11 +361,8 @@ export default class IntakeFormReviewSummary extends LightningElement {
         section.hasFields = section.fields.length > 0;
         section.hasBlocks = section.blocks.length > 0;
 
-        // Only return section if it has content
-        if (section.hasBlocks || section.hasFields) {
-            return section;
-        }
-        return null;
+        // Return section even when empty (no blocks/fields) so header shows when form data is missing
+        return section;
     }
 
     /**

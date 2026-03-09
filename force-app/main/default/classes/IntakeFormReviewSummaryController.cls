@@ -5,15 +5,24 @@
 global with sharing class IntakeFormReviewSummaryController implements omnistudio.VlocityOpenInterface {
 
     global Boolean invokeMethod(String methodName, Map<String, Object> inputMap, Map<String, Object> outMap, Map<String, Object> options) {
-        if (methodName == 'getBudgetDetail') {
-            String proposalId = (String) inputMap.get('proposal');
-            String data = getBudgets(proposalId);
-            outMap.put('budgetInfo', data);
-        }
-        if (methodName == 'getDocumentDetail') {
-            String proposalId = (String) inputMap.get('proposal');
-            String data = GrantsDocumentUploadController.getAllDocuments(proposalId);
-            outMap.put('documents', data);
+        try {
+            if (methodName == 'getBudgetDetail') {
+                String proposalId = (String) inputMap.get('proposal');
+                String data = getBudgets(proposalId);
+                outMap.put('budgetInfo', data);
+            } else if (methodName == 'getDocumentDetail') {
+                String proposalId = (String) inputMap.get('proposal');
+                String data = GrantsDocumentUploadController.getAllDocuments(proposalId);
+                outMap.put('documents', data);
+            }
+        } catch (Exception e) {
+            String msg = e instanceof AuraHandledException ? e.getMessage() : (e.getMessage() != null ? e.getMessage() : 'An error occurred.');
+            outMap.put('error', msg);
+            if (methodName == 'getBudgetDetail') {
+                outMap.put('budgetInfo', '[]');
+            } else if (methodName == 'getDocumentDetail') {
+                outMap.put('documents', '[]');
+            }
         }
         return true;
     }

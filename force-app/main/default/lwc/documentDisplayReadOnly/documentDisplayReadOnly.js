@@ -39,16 +39,11 @@ export default class DocumentDisplayReadOnly extends LightningElement {
 
     connectedCallback() {
         this._actionUtil = new OmniscriptActionCommonUtil();
-        if (!this._recordId || this._recordId === '') {
-            const urlParams = new URLSearchParams(window.location.search);
-            const proposalId = urlParams.get('c__proposal');
-            if (proposalId) this._recordId = proposalId.trim();
-        }
-        if (this._recordId) {
-            this.loadDocuments();
-        } else {
-            this._isLoading = false;
-        }
+        const urlParams = new URLSearchParams(window.location.search);
+        const proposalId = urlParams.get('c__proposal');
+        if (proposalId) this._recordId = proposalId.trim();
+        if (this._recordId) this.loadDocuments();
+        else this._isLoading = false;
     }
 
     loadDocuments() {
@@ -78,7 +73,7 @@ export default class DocumentDisplayReadOnly extends LightningElement {
                 this._documents = Array.isArray(raw) ? this.enrichDocuments(raw) : [];
                 this._showError = !this._documents || this._documents.length === 0;
                 this._errorMessage = this._showError
-                    ? (result && (result.error || result.message)) || 'No documents found.'
+                    ? (result && (result.error || result.message)) || 'No documents uploaded yet.'
                     : '';
                 this._isLoading = false;
             })

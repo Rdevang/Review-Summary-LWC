@@ -19,6 +19,7 @@ export default class BudgetDisplayReadOnly extends LightningElement {
     }
 
     _actionUtil;
+    _budgetRetryDone = false; // one retry for community first-load "Script-thrown exception"
     @track _displayData = [];
     _showError = false;
     _errorMessage = '';
@@ -35,14 +36,12 @@ export default class BudgetDisplayReadOnly extends LightningElement {
 
     connectedCallback() {
         this._actionUtil = new OmniscriptActionCommonUtil();
-        if (!this._recordId || this._recordId === '') {
-            const urlParams = new URLSearchParams(window.location.search);
-            const proposalId = urlParams.get('c__proposal');
-            if (proposalId) this._recordId = proposalId.trim();
-        }
-        if (this._recordId) {
-            this.getBudgetDetails();
-        }
+        console.log('budgetDisplayReadOnly connectedCallback recordId:', this._recordId);
+        const urlParams = new URLSearchParams(window.location.search);
+        const proposalId = urlParams.get('c__proposal');
+        if (proposalId) this._recordId = proposalId.trim();
+        console.log('budgetDisplayReadOnly connectedCallback proposalId:', proposalId);
+        if (this._recordId) this.getBudgetDetails();
     }
 
     getBudgetDetails() {
@@ -53,6 +52,7 @@ export default class BudgetDisplayReadOnly extends LightningElement {
             sMethodName: 'getBudgetDetail',
             options: '{}'
         };
+
         this._actionUtil
             .executeAction(params, null, this, null, null)
             .then((response) => {
@@ -61,20 +61,28 @@ export default class BudgetDisplayReadOnly extends LightningElement {
                 const raw = budgetInfoStr ? JSON.parse(budgetInfoStr) : [];
                 this._displayData = Array.isArray(raw) && raw.length ? this.processBudgetData(raw) : [];
                 this._showError = !this._displayData || this._displayData.length === 0;
+                const errMsg = (result && (result.error || result.message)) || 'No budget data found.';
+
+                // Community first-load often returns "Script-thrown exception"; retry once (like Previous/Next fixes it)
+                if (this._showError && errMsg === 'Script-thrown exception' && !this._budgetRetryDone) {
+                    this._budgetRetryDone = true;
+                    this._showError = false;
+                    this._errorMessage = '';
+                    console.log('budgetDisplayReadOnly: Script-thrown exception on first load, retrying in 1.5s...');
+                    setTimeout(() => {
+                        this.getBudgetDetails();
+                    }, 1500);
+                    return;
+                }
+
                 if (this._showError) {
-                    this._errorMessage = (result && (result.error || result.message)) || 'No budget data found.';
-                    console.log('budgetDisplayReadOnly errorMessage:', this._errorMessage);
-                    if (!budgetInfoStr || (Array.isArray(raw) && raw.length === 0)) {
-                        console.log('budgetDisplayReadOnly response.result:', JSON.stringify(result));
-                    }
+                    this._errorMessage = errMsg;
                 } else {
                     this._errorMessage = '';
                 }
             })
             .catch((err) => {
                 this._errorMessage = (err && (err.message || err.body?.message)) || String(err);
-                console.log('budgetDisplayReadOnly errorMessage:', this._errorMessage);
-                console.error('Budget load error:', err);
                 this._displayData = [];
                 this._showError = true;
             });
