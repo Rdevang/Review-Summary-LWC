@@ -535,6 +535,7 @@ colspan: 3 (quarter width)
 | `date` | `2026-12-31` | `December 31, 2026` |
 | `boolean` | `true` | `Yes` |
 | `number` | `1000` | `1,000` |
+| `multiselect` | `A; B; C` or string with `;` | Pills/tags per value |
 
 ### Special Properties Reference
 
@@ -542,10 +543,21 @@ colspan: 3 (quarter width)
 |:---------|:------|:---------|:------------|
 | `_sectionTitle` | Section | Yes | Display title for section header |
 | `_blockTitle` | Block | Yes | Display title for block header |
-| `_order` | Section/Block | Recommended | Sort order (ascending, 1 = first) |
+| `_order` | Section/Block | Recommended | Sort order (ascending, 1 = first). Section/block keys are ordered by this. |
+| `_dataKey` | Section | No | Form data key when it differs from the label key (e.g. `"ProjectedOutcomesStep"` with `_dataKey: "ProgramOutcomesStep"`). |
+| `_fieldOrder` | Block | No | Array of field keys for display order (e.g. `["fieldA", "fieldB"]`). Otherwise order follows `_order` on each key. |
+| `_addressColspan` | Block (address) | No | Grid colspan (1\-12) for address block when shown as single full-address field; default 6. |
 | `label` | Field | Yes (if object) | Display label when using type/colspan |
-| `type` | Field | No | Format type: phone, email, currency, date, boolean, number |
+| `type` | Field | No | Format type: phone, email, currency, date, boolean, number, multiselect |
 | `colspan` | Field | No | Grid column span (1\-12), default 6 (half width) |
+
+### Address blocks
+
+Blocks whose key or `_blockTitle` contains "address" are treated as address blocks: only the full-address value is shown (title + value). Street, City, State, etc. are not shown individually. Use `_addressColspan` on the block to control width (default 6).
+
+### Multi\-select (pills)
+
+Fields with `type: "multiselect"` or string values containing a semicolon are rendered as pills/tags (one per value). Useful for multi-picklist or comma/semicolon-separated lists.
 
 ---
 

@@ -7,14 +7,14 @@ import { LightningElement, api, track } from 'lwc';
 const SECTION_CONFIG = {
     BudgetStep: {
         order: 4.5,
-        isVisible: true,
+        isVisible: false,
         sectionTitle: 'Budget Review',
         recordIdFields: ['recordId', 'proposalId', 'ProposalId', 'proposalID', 'Proposal__c', 'proposal__c'],
         recordPageObject: 'Proposal__c'
     },
     DocumentStep: {
         order: 4.6,
-        isVisible: true,
+        isVisible: false,
         sectionTitle: 'Document Review',
         recordIdFields: ['recordId', 'proposalId', 'ProposalId', 'proposalID', 'Proposal__c', 'proposal__c'],
         recordPageObject: 'Proposal__c'
@@ -319,8 +319,8 @@ export default class IntakeFormReviewSummary extends LightningElement {
             fields: []
         };
 
-        // Iterate over sectionLabels keys to preserve the order defined in JSON
-        const keysToProcess = sectionLabels ? Object.keys(sectionLabels) : [];
+        // Iterate over sectionLabels keys in _order (ascending) for correct display order
+        const keysToProcess = sectionLabels ? this.getOrderedKeys(sectionLabels) : [];
 
         for (const key of keysToProcess) {
             // Skip internal label keys
@@ -383,46 +383,114 @@ export default class IntakeFormReviewSummary extends LightningElement {
             isBlock: true,
             isArray: false,
             fields: [],
-            nestedBlocks: []
+            nestedBlocks: [],
+            content: [] // ordered list: { type: 'field'|'nestedBlock', id, item } for correct label JSON order
         };
 
-        // Iterate over blockLabels keys to preserve the order defined in JSON
-        for (const key of Object.keys(blockLabels)) {
-            // Skip internal label keys
+        // Use _fieldOrder (or _order) so field/block order matches label JSON
+        for (const key of this.getBlockContentKeys(blockLabels)) {
             if (key.startsWith('_')) continue;
 
             const value = blockData[key];
             const labelInfo = blockLabels[key];
 
-            // Skip if no corresponding data exists
             if (value === undefined) continue;
 
             if (this.isObject(value) && !Array.isArray(value)) {
-                // Nested block (like address blocks) - labelInfo must be an object
                 if (typeof labelInfo === 'object') {
                     const nestedBlock = this.processBlock(key, value, labelInfo);
                     if (nestedBlock) {
-                        block.nestedBlocks.push(nestedBlock);
+                        if (nestedBlock.isAddressBlock) {
+                            // Show address as a normal field in the grid (half width unless _addressColspan in label JSON)
+                            const addressField = this.makeAddressField(key, nestedBlock.title, nestedBlock.fullAddressValue, labelInfo);
+                            block.fields.push(addressField);
+                            block.content.push({
+                                type: 'field',
+                                id: addressField.id,
+                                item: addressField,
+                                isField: true,
+                                isNestedBlock: false
+                            });
+                        } else {
+                            block.nestedBlocks.push(nestedBlock);
+                            block.content.push({
+                                type: 'nestedBlock',
+                                id: `nested_${key}`,
+                                item: nestedBlock,
+                                isField: false,
+                                isNestedBlock: true
+                            });
+                        }
                     }
                 }
             } else if (!Array.isArray(value)) {
-                // Simple field - labelInfo can be string or object with label/type
                 const isValidLabel = typeof labelInfo === 'string' ||
                     (typeof labelInfo === 'object' && labelInfo.label);
                 if (isValidLabel) {
                     const field = this.processField(key, value, labelInfo);
                     if (field && (!this.hideEmptyFields || field.displayValue !== '—')) {
                         block.fields.push(field);
+                        block.content.push({
+                            type: 'field',
+                            id: field.id,
+                            item: field,
+                            isField: true,
+                            isNestedBlock: false
+                        });
                     }
                 }
             }
         }
 
-        // Only return block if it has content
-        if (block.fields.length > 0 || block.nestedBlocks.length > 0) {
+        // Address blocks: keep only Full Address value; show as "Applicant Address" + value (no "Full Address" label)
+        if (this.isAddressBlock(blockKey, blockLabels)) {
+            const fullAddressField = block.fields.find(f => f.label === 'Full Address');
+            if (fullAddressField) {
+                block.fields = [fullAddressField];
+                block.isAddressBlock = true;
+                block.fullAddressValue = fullAddressField.displayValue;
+            }
+            block.content = []; // address block renders as title + value only, no content list
+        }
+
+        if (block.fields.length > 0 || block.nestedBlocks.length > 0 || block.content.length > 0) {
             return block;
         }
         return null;
+    }
+
+    /**
+     * @description Whether this block is an address sub-block (e.g. Applicant Address, Owner Address).
+     * Used to show only "Full Address" and hide Street/City/State/Zip/Country.
+     */
+    isAddressBlock(blockKey, blockLabels) {
+        if (!blockKey || !blockLabels) return false;
+        const keyLower = blockKey.toLowerCase();
+        const title = (blockLabels._blockTitle || '').toLowerCase();
+        return (keyLower.includes('address') && keyLower.includes('block')) || title.includes('address');
+    }
+
+    /**
+     * @description Create a field-shaped object for address so it renders in the grid like other fields.
+     * Uses half width (colspan 6) by default unless overridden via label JSON _addressColspan.
+     */
+    makeAddressField(key, label, displayValue, blockLabels) {
+        const colspan = (blockLabels && typeof blockLabels._addressColspan === 'number')
+            ? Math.min(Math.max(blockLabels._addressColspan, 1), 12)
+            : 6;
+        return {
+            id: key,
+            key: key,
+            label: label,
+            value: displayValue,
+            displayValue: displayValue || '—',
+            fieldType: 'text',
+            isBoolean: false,
+            isMultiSelect: false,
+            displayValues: [],
+            colspan: colspan,
+            spanClass: `field-item span-${colspan}`
+        };
     }
 
     /**
@@ -453,8 +521,8 @@ export default class IntakeFormReviewSummary extends LightningElement {
             columns: []
         };
 
-        // Get label keys in order (excluding internal keys)
-        const labelKeys = Object.keys(itemLabels).filter(k => !k.startsWith('_'));
+        // Get label keys in document order (same as label JSON) for column/field order
+        const labelKeys = this.getKeysInDocumentOrder(itemLabels);
 
         // Process each item in the array
         arrayData.forEach((item, index) => {
@@ -536,6 +604,14 @@ export default class IntakeFormReviewSummary extends LightningElement {
         const displayValue = this.formatValue(value, fieldType);
         const isBoolean = fieldType === 'boolean';
 
+        // Multi-select: values separated by semicolon — show as pills/tags (id for unique key in LWC)
+        const isMultiSelect = fieldType === 'multiselect' ||
+            (typeof value === 'string' && value.trim().indexOf(';') >= 0);
+        const rawString = value != null && typeof value === 'string' ? value : '';
+        const displayValues = isMultiSelect
+            ? rawString.split(';').map(s => s.trim()).filter(Boolean).map((s, i) => ({ id: `${key}_${i}`, value: s }))
+            : [];
+
         return {
             id: key,
             key: key,
@@ -544,12 +620,14 @@ export default class IntakeFormReviewSummary extends LightningElement {
             displayValue: displayValue,
             fieldType: fieldType,
             isBoolean: isBoolean,
+            isMultiSelect: isMultiSelect && displayValues.length > 0,
+            displayValues: displayValues,
             isCurrency: fieldType === 'currency',
             isDate: fieldType === 'date',
             isEmail: fieldType === 'email',
             isPhone: fieldType === 'phone',
             isNumber: fieldType === 'number',
-            isText: !['boolean', 'currency', 'date', 'email', 'phone', 'number'].includes(fieldType),
+            isText: !['boolean', 'currency', 'date', 'email', 'phone', 'number', 'multiselect'].includes(fieldType),
             // Pre-computed values for boolean display (LWC doesn't support ternary in templates)
             booleanIcon: isBoolean ? (value ? 'utility:check' : 'utility:close') : '',
             booleanIconClass: isBoolean ? (value ? 'icon-success' : 'icon-error') : '',
@@ -594,6 +672,10 @@ export default class IntakeFormReviewSummary extends LightningElement {
     formatValue(value, fieldType) {
         if (value === null || value === undefined || value === '') {
             return '—';
+        }
+        // Multi-select: keep raw string for fallback; UI shows as pills
+        if (fieldType === 'multiselect' && typeof value === 'string') {
+            return value;
         }
 
         // Boolean formatting
@@ -761,6 +843,56 @@ export default class IntakeFormReviewSummary extends LightningElement {
         title = title.replace(/\b\w/g, l => l.toUpperCase());
 
         return title.trim() || key;
+    }
+
+    /**
+     * @description Get keys from a labels object sorted by _order (ascending).
+     * Keys with _order use that value; keys without use 999 so they follow ordered items.
+     * Ties and missing _order preserve original key order for stable display.
+     * @param {object} labelsObj - Label object (section, block, or item labels)
+     * @returns {string[]} Keys in display order (excluding keys starting with '_')
+     */
+    getOrderedKeys(labelsObj) {
+        if (!labelsObj || typeof labelsObj !== 'object') return [];
+        const keys = Object.keys(labelsObj).filter(k => !k.startsWith('_'));
+        const withOrder = keys.map((k, i) => {
+            const info = labelsObj[k];
+            const order = (typeof info === 'object' && info !== null && typeof info._order === 'number')
+                ? info._order
+                : 999;
+            return { key: k, order, index: i };
+        });
+        withOrder.sort((a, b) => a.order !== b.order ? a.order - b.order : a.index - b.index);
+        return withOrder.map(x => x.key);
+    }
+
+    /**
+     * @description Get keys for block content in display order.
+     * If blockLabels._fieldOrder is an array, use that order (then append any keys not listed).
+     * Otherwise use getOrderedKeys (sort by _order on each key).
+     * @param {object} blockLabels - Block label object (may have _fieldOrder)
+     * @returns {string[]} Keys in display order
+     */
+    getBlockContentKeys(blockLabels) {
+        if (!blockLabels || typeof blockLabels !== 'object') return [];
+        const fieldOrder = blockLabels._fieldOrder;
+        if (Array.isArray(fieldOrder) && fieldOrder.length > 0) {
+            const ordered = fieldOrder.filter(k => typeof k === 'string' && !k.startsWith('_') && blockLabels[k] != null);
+            const rest = Object.keys(blockLabels).filter(k => !k.startsWith('_') && !ordered.includes(k));
+            return [...ordered, ...rest];
+        }
+        return this.getOrderedKeys(blockLabels);
+    }
+
+    /**
+     * @description Get keys in document order (as they appear in the label JSON / object).
+     * Use within blocks so field and nested-block order matches the label JSON exactly.
+     * @param {object} labelsObj - Label object (block or item labels)
+     * @returns {string[]} Keys in source order (excluding keys starting with '_')
+     */
+    getKeysInDocumentOrder(labelsObj) {
+        if (!labelsObj || typeof labelsObj !== 'object') return [];
+        return Object.keys(labelsObj).filter(k => !k.startsWith('_'));
     }
 
     /**

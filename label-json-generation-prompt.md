@@ -20,7 +20,7 @@ Use this prompt with **Gemini**, **ChatGPT**, or another AI to generate **label 
 
 **Task:** Given a **data JSON** (the "form data" or "data JSON" the user provides), produce a **label JSON** that:
 
-1. **Mirrors the exact structure** of the data JSON: same keys at every level. Section keys, block keys, and field keys in the label JSON must match the data JSON **exactly** (case-sensitive).
+1. **Mirrors the exact structure** of the data JSON: same keys at every level. Section keys, block keys, and field keys in the label JSON must match the data JSON **exactly** (case-sensitive). Exception: if a section key in the label JSON is different from the form/data key (e.g. label key `ProjectedOutcomesStep` but data key `ProgramOutcomesStep`), add **`_dataKey`** (string) on that section with the actual data key.
 2. **Uses only the rules below** for how to represent sections, blocks, and fields.
 
 ---
@@ -32,13 +32,16 @@ Use this prompt with **Gemini**, **ChatGPT**, or another AI to generate **label 
 - For each section provide:
   - **`_sectionTitle`** (string): Human-readable section title. Derive from the section key (e.g. turn `ApplicantInfo_Step` into "Applicant Information") or from context.
   - **`_order`** (number): Display order, starting at 1 and incrementing per section (1, 2, 3, …).
-  - **All other keys** in that section are either **field keys** or **block keys** (see below). Do not add or remove keys; only add metadata (`_sectionTitle`, `_order`) and replace values with labels.
+  - **`_dataKey`** (string, optional): Only when the **form/data key** for this section is different from the label key. Set `_dataKey` to the key used in the actual form data (e.g. section key `ProjectedOutcomesStep` with `_dataKey: "ProgramOutcomesStep"`).
+  - **All other keys** in that section are either **field keys** or **block keys** (see below). Do not add or remove keys; only add metadata (`_sectionTitle`, `_order`, `_dataKey`) and replace values with labels.
 
 **Blocks (nested objects that are not primitives or arrays)**  
 - If a value in the data JSON is an **object** (and not a single field with sub-fields like an address), treat it as a **block**.  
 - For each block provide:
   - **`_blockTitle`** (string): Human-readable block title. Derive from the key (e.g. `ContactInfoBlock` → "Contact Information") or context.
   - **`_order`** (number): Order of the block within the section (1, 2, 3, …).
+  - **`_fieldOrder`** (array of strings, optional): List of field keys in the order they should appear. Omit to use natural/key order.
+  - **`_addressColspan`** (number, optional): For **address blocks** only (key or `_blockTitle` contains "address"). The renderer shows a single "Full Address" line. Set colspan 1–12 (default 6) for layout.
   - **All other keys** inside the block are field keys (see below). Again, preserve the same keys as in the data; only add metadata and labels.
 
 **Fields (leaf values: strings, numbers, booleans, or values inside arrays)**  
@@ -46,13 +49,14 @@ Use this prompt with **Gemini**, **ChatGPT**, or another AI to generate **label 
   - **Short form:** A single string: the human-readable label (e.g. `"ApplicantInformation_CEOName": "CEO/Executive Director Name"`).
   - **Long form (when formatting or layout is needed):** An object:
     - **`label`** (string, required): Display label.
-    - **`type`** (string, optional): One of: `phone`, `email`, `currency`, `date`, `boolean`, `number`. Use from value shape and naming:
+    - **`type`** (string, optional): One of: `phone`, `email`, `currency`, `date`, `boolean`, `number`, `multiselect`. Use from value shape and naming:
       - Phone numbers (digits, or key/name contains "phone", "phoneNumber", "tel") → `phone`
       - Email-like strings or keys containing "email" → `email`
       - Money/amounts or keys like "budget", "amount", "salary", "grant" → `currency`
       - Date strings or keys like "date", "birthDate", "fiscalYearEnd" → `date`
       - true/false or keys like "isActive", "certify", "compliant" → `boolean`
       - Plain numbers (counts, EIN, etc.) → `number`
+      - Semicolon-separated lists or multi-picklist values (e.g. `"A; B; C"`) → `multiselect` (renders as pills/tags)
     - **`colspan`** (number, optional): Grid column span 1–12. Use 12 for long text/descriptions, 6 as default, 4 for short fields if you want a 3-column row.
 
 **Arrays (repeatable blocks/lists)**  
@@ -69,9 +73,9 @@ Use this prompt with **Gemini**, **ChatGPT**, or another AI to generate **label 
 ### Output requirements
 
 - Output **only** valid JSON. No markdown code fences, no commentary before or after.
-- Preserve the **exact key names** from the data JSON at every level (sections, blocks, fields). Only add `_sectionTitle`, `_order`, `_blockTitle`, and replace values with label strings or `{ "label", "type", "colspan" }` objects.
-- Use the **long form** (`{ "label": "...", "type": "..." }`) for any field that should be formatted (phone, email, currency, date, boolean, number); use the **short form** (plain string) for plain text.
-- Order sections and blocks with sequential `_order` (1, 2, 3, …) in the same order as they appear in the data JSON, unless the user specifies a different order.
+- Preserve the **exact key names** from the data JSON at every level (sections, blocks, fields). Only add `_sectionTitle`, `_order`, `_dataKey` (sections), `_blockTitle`, `_order`, `_fieldOrder`, `_addressColspan` (blocks), and replace values with label strings or `{ "label", "type", "colspan" }` objects.
+- Use the **long form** (`{ "label": "...", "type": "..." }`) for any field that should be formatted (phone, email, currency, date, boolean, number, multiselect); use the **short form** (plain string) for plain text.
+- Order sections and blocks with sequential `_order` (1, 2, 3, …) in the same order as they appear in the data JSON, unless the user specifies a different order. Use `_fieldOrder` on blocks when field display order must be explicit.
 
 ---
 
@@ -116,5 +120,5 @@ Use this prompt with **Gemini**, **ChatGPT**, or another AI to generate **label 
 
 ## Related documentation
 
-* **Label Data Format** and **Special Properties Reference**: See [README.md](README.md#label-data-format) in this repo.
+* **Label Data Format**, **Special Properties Reference**, address blocks, and multiselect: See [README.md](README.md) and [README-FULL.md](README-FULL.md) in this repo.
 * **Custom Metadata**: Store the generated JSON in **Form_Review_Config__mdt** → **Label_JSON__c** for the Intake Form Review Summary LWC.

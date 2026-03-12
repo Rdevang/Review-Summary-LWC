@@ -42,9 +42,12 @@ Reusable Salesforce LWC that renders a review/summary view for intake forms in *
 
 ## Label JSON
 
-* Label JSON must mirror your form data structure: same section/block/field keys (case-sensitive).
-* Use `_sectionTitle` and `_order` on sections; `_blockTitle` and `_order` on blocks; field value = label string or `{ "label": "...", "type": "phone"|"email"|"currency"|"date"|"boolean"|"number" }`.
-* To generate label JSON from data JSON, use the AI prompt in **[label-json-generation-prompt.md](label-json-generation-prompt.md)**.
+* Label JSON must mirror your form data structure: same section/block/field keys (case-sensitive). Use **`_dataKey`** on a section when the form data key differs (e.g. label key `ProjectedOutcomesStep` → form key `ProgramOutcomesStep`).
+* Use `_sectionTitle` and `_order` on sections; `_blockTitle` and `_order` on blocks; optional **`_fieldOrder`** (array of field keys) to control block field order.
+* Field value = label string or `{ "label": "...", "type": "phone"|"email"|"currency"|"date"|"boolean"|"number"|"multiselect" }`. Semicolon-separated values or `type: "multiselect"` render as pills.
+* Address blocks (key/title containing "address") show only the full-address value; use **`_addressColspan`** (1–12) on the block to set width.
+* Budget/Document sections are driven by **SECTION_CONFIG** in the LWC (`isVisible`, `order`); set `isVisible: true` to show them.
+* To generate label JSON from data JSON, use **[label-json-generation-prompt.md](label-json-generation-prompt.md)**.
 
 ## More Documentation
 

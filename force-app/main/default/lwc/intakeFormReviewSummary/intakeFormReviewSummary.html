@@ -68,7 +68,16 @@
                                             <template for:each={section.fields} for:item="field">
                                                 <div key={field.id} class={field.spanClass}>
                                                     <div class="field-label">{field.label}</div>
-                                                    <div class="field-value">{field.displayValue}</div>
+                                                    <template lwc:if={field.isMultiSelect}>
+                                                        <div class="field-value multiselect-pills" role="list" aria-label={field.label}>
+                                                            <template for:each={field.displayValues} for:item="pillItem">
+                                                                <span key={pillItem.id} class="pill" role="listitem">{pillItem.value}</span>
+                                                            </template>
+                                                        </div>
+                                                    </template>
+                                                    <template lwc:else>
+                                                        <div class="field-value">{field.displayValue}</div>
+                                                    </template>
                                                 </div>
                                             </template>
                                         </div>
@@ -96,7 +105,16 @@
                                                                 <tr key={item.id}>
                                                                     <td>{item.index}</td>
                                                                     <template for:each={item.fields} for:item="itemField">
-                                                                        <td key={itemField.id}>{itemField.displayValue}</td>
+                                                                        <td key={itemField.id}>
+                                                                            <template lwc:if={itemField.isMultiSelect}>
+                                                                                <div class="multiselect-pills multiselect-pills-inline" role="list" aria-label={itemField.label}>
+                                                                                    <template for:each={itemField.displayValues} for:item="tablePill">
+                                                                                        <span key={tablePill.id} class="pill" role="listitem">{tablePill.value}</span>
+                                                                                    </template>
+                                                                                </div>
+                                                                            </template>
+                                                                            <template lwc:else>{itemField.displayValue}</template>
+                                                                        </td>
                                                                     </template>
                                                                 </tr>
                                                             </template>
@@ -105,31 +123,57 @@
                                                 </div>
                                             </template>
 
-                                            <!-- Regular Block -->
+                                            <!-- Regular Block: content order = label JSON order (fields + nested blocks interleaved) -->
                                             <template lwc:else>
-                                                <div class="field-grid">
-                                                    <template for:each={block.fields} for:item="blockField">
-                                                        <div key={blockField.id} class={blockField.spanClass}>
-                                                            <div class="field-label">{blockField.label}</div>
-                                                            <div class="field-value">{blockField.displayValue}</div>
-                                                        </div>
+                                                <div class="block-content field-grid">
+                                                    <template for:each={block.content} for:item="contentItem">
+                                                        <!-- Field -->
+                                                        <template lwc:if={contentItem.isField}>
+                                                            <div key={contentItem.id} class={contentItem.item.spanClass}>
+                                                                <div class="field-label">{contentItem.item.label}</div>
+                                                                <template lwc:if={contentItem.item.isMultiSelect}>
+                                                                    <div class="field-value multiselect-pills" role="list" aria-label={contentItem.item.label}>
+                                                                        <template for:each={contentItem.item.displayValues} for:item="pillItem">
+                                                                            <span key={pillItem.id} class="pill" role="listitem">{pillItem.value}</span>
+                                                                        </template>
+                                                                    </div>
+                                                                </template>
+                                                                <template lwc:else>
+                                                                    <div class="field-value">{contentItem.item.displayValue}</div>
+                                                                </template>
+                                                            </div>
+                                                        </template>
+                                                        <!-- Nested block (e.g. address): title + value only when isAddressBlock -->
+                                                        <template lwc:if={contentItem.isNestedBlock}>
+                                                            <div key={contentItem.id} class="nested-block span-12">
+                                                                <template lwc:if={contentItem.item.isAddressBlock}>
+                                                                    <div class="nested-block-title">{contentItem.item.title}</div>
+                                                                    <div class="field-value address-value-only">{contentItem.item.fullAddressValue}</div>
+                                                                </template>
+                                                                <template lwc:else>
+                                                                    <div class="nested-block-title">{contentItem.item.title}</div>
+                                                                    <div class="field-grid">
+                                                                        <template for:each={contentItem.item.fields} for:item="nestedField">
+                                                                            <div key={nestedField.id} class={nestedField.spanClass}>
+                                                                                <div class="field-label">{nestedField.label}</div>
+                                                                                <template lwc:if={nestedField.isMultiSelect}>
+                                                                                    <div class="field-value multiselect-pills" role="list" aria-label={nestedField.label}>
+                                                                                        <template for:each={nestedField.displayValues} for:item="pillItem">
+                                                                                            <span key={pillItem.id} class="pill" role="listitem">{pillItem.value}</span>
+                                                                                        </template>
+                                                                                    </div>
+                                                                                </template>
+                                                                                <template lwc:else>
+                                                                                    <div class="field-value">{nestedField.displayValue}</div>
+                                                                                </template>
+                                                                            </div>
+                                                                        </template>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </template>
                                                     </template>
                                                 </div>
-
-                                                <!-- Nested Blocks -->
-                                                <template for:each={block.nestedBlocks} for:item="nestedBlock">
-                                                    <div key={nestedBlock.id} class="nested-block">
-                                                        <div class="nested-block-title">{nestedBlock.title}</div>
-                                                        <div class="field-grid">
-                                                            <template for:each={nestedBlock.fields} for:item="nestedField">
-                                                                <div key={nestedField.id} class={nestedField.spanClass}>
-                                                                    <div class="field-label">{nestedField.label}</div>
-                                                                    <div class="field-value">{nestedField.displayValue}</div>
-                                                                </div>
-                                                            </template>
-                                                        </div>
-                                                    </div>
-                                                </template>
                                             </template>
                                         </div>
                                     </template>
