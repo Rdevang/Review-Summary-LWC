@@ -1,0 +1,225 @@
+{
+  "CAN_ContactsInformation": {
+    "_sectionTitle": "Contacts Information",
+    "_order": 1,
+    "CAN_ApplicantInfo": {
+      "_blockTitle": "Applicant Information",
+      "_order": 1,
+      "CAN_ApplicantAddress-Block": {
+        "_blockTitle": "Applicant Address",
+        "_order": 1,
+        "_addressColspan": 6,
+        "CAN_ApplicantAddress": "Full Address",
+        "CAN_ZipCode_ApplicantAddress": "Zip Code",
+        "CAN_Country_ApplicantAddress": "Country",
+        "CAN_Street_ApplicantAddress": "Street",
+        "CAN_City_ApplicantAddress": "City",
+        "CAN_State_ApplicantAddress": "State/Province"
+      },
+      "CAN_ApplicantName": "Applicant Name",
+      "CAN_ApplicantPhone": {
+        "label": "Applicant Phone",
+        "type": "phone"
+      },
+      "CAN_ApplicantEmail": {
+        "label": "Applicant Email",
+        "type": "email"
+      },
+      "CAN_ApplicantCompany": "Applicant Company"
+    },
+    "CAN_OwnerInfo": {
+      "_blockTitle": "Owner Information",
+      "_order": 2,
+      "CAN_OwnerName": "Owner Name",
+      "CAN_OwnerPhone": {
+        "label": "Owner Phone",
+        "type": "phone"
+      },
+      "CAN_OwnerEmail": {
+        "label": "Owner Email",
+        "type": "email"
+      },
+      "CAN_OwnerAddress-Block": {
+        "_blockTitle": "Owner Address",
+        "_order": 1,
+        "_addressColspan": 6,
+        "CAN_OwnerAddress": "Full Address",
+        "CAN_City_OwnerAddress": "City",
+        "CAN_State_OwnerAddress": "State/Province",
+        "CAN_Country_OwnerAddress": "Country",
+        "CAN_ZipCode_OwnerAddress": "Zip Code",
+        "CAN_Street_OwnerAddress": "Street"
+      }
+    },
+    "CAN_ContractorInfo": {
+      "_blockTitle": "Contractor Information",
+      "_order": 3,
+      "CAN_ContractorName": "Contractor Name",
+      "CAN_ContractorCompany": "Contractor Company",
+      "CAN_ContractorPhone": {
+        "label": "Contractor Phone",
+        "type": "phone"
+      },
+      "CAN_ContractorEmail": {
+        "label": "Contractor Email",
+        "type": "email"
+      }
+    },
+    "CAN_DesignerInfo": {
+      "_blockTitle": "Designer Information",
+      "_order": 4,
+      "CAN_DesignerName": "Designer Name",
+      "CAN_DesignerCompany": "Designer Company",
+      "CAN_DesignerEmail": {
+        "label": "Designer Email",
+        "type": "email"
+      },
+      "CAN_DesignerPhone": {
+        "label": "Designer Phone",
+        "type": "phone"
+      }
+    }
+  },
+  "CAN_SiteInformation": {
+    "_sectionTitle": "Site Information",
+    "_order": 2,
+    "CAN_CivicAddress-Block": {
+      "_blockTitle": "Civic Address",
+      "_order": 1,
+      "_addressColspan": 6,
+      "CAN_CivicAddress": "Full Address",
+      "CAN_ZipCode_CivicAddress": "Zip Code",
+      "CAN_Country_CivicAddress": "Country",
+      "CAN_State_CivicAddress": "State/Province",
+      "CAN_City_CivicAddress": "City",
+      "CAN_Street_CivicAddress": "Street"
+    },
+    "CAN_Lot": "Lot",
+    "CAN_Resub": "Resub",
+    "CAN_Plan": "Plan",
+    "CAN_Block": "Block",
+    "CAN_DistrictLot": "District Lot",
+    "CAN_PID": {
+      "label": "PID",
+      "type": "number"
+    }
+  },
+  "CAN_ProjectScopeOfWork": {
+    "_sectionTitle": "Proposed Scope of Work",
+    "_order": 3,
+    "CAN_WorkType": {
+      "label": "Work Type",
+      "type": "multiselect"
+    },
+    "CAN_ProjectDescription": "Project Description",
+    "CAN_EstimatedConstructionValue": {
+      "label": "Estimated Construction Value",
+      "type": "currency"
+    }
+  },
+  "CAN_ScopeOfWorkDetails": {
+    "_sectionTitle": "Scope of Work Details",
+    "_order": 4,
+    "CAN_TotalUnitsAfterCompletion": {
+      "label": "Total Units After Completion",
+      "type": "number"
+    },
+    "CAN_UnitTypology": {
+      "label": "Unit Typology",
+      "type": "multiselect"
+    },
+    "CAN_ExistingUnitsRetained": {
+      "label": "Existing Units Retained",
+      "type": "number"
+    },
+    "CAN_UnitsDemolished": {
+      "label": "Units Demolished",
+      "type": "number"
+    },
+    "CAN_NewUnitsCreated": {
+      "label": "New Units Created",
+      "type": "number"
+    },
+    "CAN_IsStratified": {
+      "label": "Is Stratified",
+      "type": "boolean"
+    }
+  },
+  "CAN_ProjectDetails": {
+    "_sectionTitle": "Project Details",
+    "_order": 5,
+    "CAN_HMS": "HMS",
+    "CAN_ConvertedToStrata": {
+      "label": "Converted to Strata",
+      "type": "boolean"
+    },
+    "CAN_PrevIndustrialCommercial": {
+      "label": "Previous Industrial/Commercial",
+      "type": "boolean"
+    },
+    "CAN_AdjacentToRavineSlope": {
+      "label": "Adjacent to Ravine/Slope",
+      "type": "boolean"
+    },
+    "CAN_ExistingDriveway": {
+      "label": "Existing Driveway",
+      "type": "boolean"
+    },
+    "CAN_ConstructionCommenced": {
+      "label": "Construction Commenced",
+      "type": "boolean"
+    },
+    "CAN_OnHeritageRegister": {
+      "label": "On Heritage Register",
+      "type": "boolean"
+    },
+    "CAN_LegalizingConstruction": {
+      "label": "Legalizing Construction",
+      "type": "boolean"
+    },
+    "CAN_HasEasementsCovenants": {
+      "label": "Has Easements/Covenants",
+      "type": "boolean"
+    },
+    "CAN_BuiltBefore1990": {
+      "label": "Built Before 1990",
+      "type": "boolean"
+    },
+    "CAN_Within800mHighway": {
+      "label": "Within 800m of Highway",
+      "type": "boolean"
+    }
+  },
+  "CAN_RequiredPermits": {
+    "_sectionTitle": "Required Permits",
+    "_order": 6,
+    "CAN_PermitSelection": {
+      "label": "Permit Selection",
+      "type": "multiselect"
+    },
+    "CAN_PlanningInquiryCompleted": {
+      "label": "Planning Inquiry Completed",
+      "type": "boolean"
+    }
+  },
+  "CAN_ComplianceConfirmation": {
+    "_sectionTitle": "Compliance Confirmation",
+    "_order": 8,
+    "CAN_MeetsBuildingCode": {
+      "label": "Meets Building Code",
+      "type": "boolean"
+    },
+    "CAN_RequiredPlansSubmitted": {
+      "label": "Required Plans Submitted",
+      "type": "boolean"
+    },
+    "CAN_RequiredDocsAttached": {
+      "label": "Required Documents Attached",
+      "type": "boolean"
+    },
+    "CAN_CompliesWithLaw": {
+      "label": "Complies with Law",
+      "type": "boolean"
+    }
+  }
+}
