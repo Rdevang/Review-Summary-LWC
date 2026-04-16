@@ -339,10 +339,14 @@ export default class IntakeFormReviewSummary extends LightningElement {
                     section.blocks.push(arrayBlock);
                 }
             } else if (this.isObject(value)) {
-                // It's a nested block (needs _blockTitle or field labels)
                 const block = this.processBlock(key, value, labelInfo);
                 if (block) {
-                    section.blocks.push(block);
+                    if (block.isAddressBlock) {
+                        const addressField = this.makeAddressField(key, block.title, block.fullAddressValue, labelInfo);
+                        section.fields.push(addressField);
+                    } else {
+                        section.blocks.push(block);
+                    }
                 }
             } else {
                 // It's a simple field - labelInfo can be string or object with label/type
