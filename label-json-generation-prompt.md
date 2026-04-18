@@ -121,4 +121,5 @@ Use this prompt with **Gemini**, **ChatGPT**, or another AI to generate **label 
 ## Related documentation
 
 * **Label Data Format**, **Special Properties Reference**, address blocks, and multiselect: See [README.md](README.md) and [README-FULL.md](README-FULL.md) in this repo.
+* **OmniScript Set Values** (`elementValueMap`, **`Org_Type`** `LPI` \| `GRANTS`, **`configDeveloperName`**, **`recordID`**): See [README.md — OmniScript Set Values](README.md#omniscript-set-values) and [README-FULL.md — OmniScript Set Values](README-FULL.md#omniscript-set-values-elementvaluemap).
 * **Custom Metadata**: Store the generated JSON in **Form_Review_Config__mdt** → **Label_JSON__c** for the Intake Form Review Summary LWC.

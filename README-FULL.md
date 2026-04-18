@@ -15,6 +15,7 @@ A reusable Salesforce Lightning Web Component that dynamically renders a review 
 * [Project Structure](#project-structure)
 * [Quick Start](#quick-start)
 * [Step\-by\-Step Setup Guide](#step-by-step-setup-guide)
+* [OmniScript Set Values](#omniscript-set-values-elementvaluemap)
 * [Label Data Format](#label-data-format)
 * [API Reference](#api-reference)
 * [Deployment](#deployment)
@@ -38,8 +39,9 @@ A reusable Salesforce Lightning Web Component that dynamically renders a review 
 | Component | Purpose |
 |:---------|:--------|
 | **intakeFormReviewSummary** | Review/summary view for intake forms; label\-driven, OmniScript + Record Page. |
-| **budgetDisplayReadOnly** | Read\-only budget display; fetches data via `GrantsBudgetController.getBudgetDetail`. |
-| **GrantsBudgetController** | Apex backend for budget data and line\-item CRUD; used by OmniScript and budget LWC. |
+| **budgetDisplayReadOnly** | Read\-only budget; uses `IntakeFormReviewSummaryController.getBudgetDetail` via OmniStudio action. |
+| **unifiedDocumentDisplay** | Read\-only documents for **LPI** and **GRANTS**; uses `IntakeFormReviewSummaryController.getDocuments` (or legacy `getDocumentDetail`). |
+| **IntakeFormReviewSummaryController** | Apex; `getBudgetDetail`, `getDocumentDetail`, `getDocuments` (OmniStudio `VlocityOpenInterface`). |
 
 ---
 
@@ -349,19 +351,24 @@ Create an OmniScript to tie everything together:
 
 **Add Elements in This Order:**
 
-#### 6.1 SetValues Element
+#### 6.1 Set Values Element
 
 **Name**: `SetValues`
 
-**Element Value Map**:
+Populate **`elementValueMap`** so DataRaptors and the LWC receive **`configDeveloperName`**, record context, and **`Org_Type`** (**`LPI`** or **`GRANTS`**). Full key reference and LPI/GRANTS behavior: see **[OmniScript Set Values](#omniscript-set-values-elementvaluemap)** below.
+
+Example (Permit / LPI-style script; merge fields must match your OmniScript):
 
 ```json
 {
-  "configDeveloperName": "MAEOED_Proposal_Config",
-  "recordId": "=IF(%isPortalUser%, %recordId%, %ContextId%)",
-  "isPortalUser": "=%userProfile% != \"System Administrator\""
+  "isPortalUser": "=%userProfile% != \"System Administrator\"",
+  "configDeveloperName": "Permit_BuildingSingleDetached",
+  "recordID": "=IF(%isPortalUser%, IF(%Org_Type% == \"LPI\", %parid%, %proposal%), %ContextId%)",
+  "Org_Type": "LPI"
 }
 ```
+
+For **GRANTS**, set **`Org_Type`** to **`GRANTS`** and align **`recordID`** with your proposal Id merge field(s). The LWC resolves **`recordId`** / **`recordID`** from `omniJsonData` for Budget and Document steps.
 
 #### 6.2 DataRaptor Extract \- Label Config
 
@@ -385,7 +392,7 @@ Create an OmniScript to tie everything together:
 
 | Key | Value |
 |:----|:------|
-| `recordId` | `%recordId%` |
+| `recordId` | `%recordID%` or `%recordId%` (must match the Set Values output name your DR expects) |
 
 #### 6.4 Step with Custom LWC
 
@@ -402,6 +409,41 @@ Create an OmniScript to tie everything together:
 1. Click **Activate** on the OmniScript
 2. Click **Preview** to test
 3. Verify sections display in correct order with proper formatting
+
+---
+
+## OmniScript Set Values (`elementValueMap`)
+
+The first **Set Values** step should establish variables the rest of the OmniScript and the **intakeFormReviewSummary** LWC rely on. The LWC reads **`Org_Type`** from `omniJsonData` (root or nested form data) to decide which synthetic sections apply (**SECTION_CONFIG** in `intakeFormReviewSummary.js`: Budget vs Document, **LPI** vs **GRANTS**) and passes **`orgType`** to **`c-unified-document-display`**.
+
+### Keys
+
+| Key | Role |
+|:----|:-----|
+| **`isPortalUser`** | Expression such as `=%userProfile% != "System Administrator"` to distinguish Experience Cloud / portal users from internal users. |
+| **`configDeveloperName`** | **`DeveloperName`** of the **Form_Review_Config__mdt** row whose **Label_JSON__c** drives **`labelData`** (e.g. `Permit_BuildingSingleDetached`, `MAEOED_Proposal_Config`). |
+| **`Org_Type`** | **`LPI`** or **`GRANTS`**. Must match the program; required for correct document list behavior and section visibility. |
+| **`recordID`** or **`recordId`** | Record Id for DataRaptor extracts (form JSON long text fields) and for Budget/Document child LWCs. Common pattern: portal users use **`parid`** when **`Org_Type`** is **`LPI`** and **`proposal`** when **`GRANTS`**; internal users use **`ContextId`**. The component checks multiple keys (`recordId`, `recordID`, `ContextId`, etc.) on `omniJsonData`. |
+
+### Example `elementValueMap`
+
+```json
+{
+  "isPortalUser": "=%userProfile% != \"System Administrator\"",
+  "configDeveloperName": "Permit_BuildingSingleDetached",
+  "recordID": "=IF(%isPortalUser%, IF(%Org_Type% == \"LPI\", %parid%, %proposal%), %ContextId%)",
+  "Org_Type": "LPI"
+}
+```
+
+### GRANTS
+
+Use the same structure with **`"Org_Type": "GRANTS"`** and ensure proposal-related merge fields in **`recordID`** (and any **`proposal`** / **`parid`** aliases) match your OmniScript naming.
+
+### DataRaptor and Custom LWC inputs
+
+* **DRExtractLabelJSON** input **`configDeveloperName`** → `%configDeveloperName%`.
+* **Form data extract** input **`recordId`** (or your DR’s parameter name) → the same merge field you set in Set Values (e.g. `%recordID%` if that is the output key).
 
 ---
 
