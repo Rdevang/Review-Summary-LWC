@@ -1,13 +1,5 @@
 <template>
     <div class="review-container">
-        <!-- Header (only shown when title is provided) -->
-        <template lwc:if={hasTitle}>
-            <div class="review-header">
-                <span class="header-title">{title}</span>
-            </div>
-            <div class="header-underline"></div>
-        </template>
-
         <!-- Loading State -->
         <template lwc:if={isLoading}>
             <div class="slds-align_absolute-center slds-p-around_large">
@@ -57,9 +49,12 @@
                                 <template lwc:if={section.showBudgetChild}>
                                     <c-budget-display-read-only record-id={section.recordId}></c-budget-display-read-only>
                                 </template>
-                                <!-- Document Review: child LWC (read-only document list) -->
+                                <!-- Document Review: unified LWC (supports both LPI and GRANTS) -->
                                 <template lwc:elseif={section.showDocumentChild}>
-                                    <c-unified-document-display record-id={section.recordId} org-type={section.orgType}></c-unified-document-display>
+                                    <c-unified-document-display
+                                        org-type={section.orgType}
+                                        record-id={section.recordId}>
+                                    </c-unified-document-display>
                                 </template>
                                 <!-- Standard section fields and blocks -->
                                 <template lwc:else>
