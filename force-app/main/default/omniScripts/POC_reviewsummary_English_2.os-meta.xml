@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <OmniScript xmlns="http://soap.sforce.com/2006/04/metadata">
     <elementTypeComponentMapping>{&quot;ElementTypeToHTMLTemplateList&quot;:[]}</elementTypeComponentMapping>
-    <isActive>true</isActive>
+    <isActive>false</isActive>
     <isIntegrationProcedure>false</isIntegrationProcedure>
     <isManagedUsingStdDesigner>false</isManagedUsingStdDesigner>
     <isMetadataCacheDisabled>false</isMetadataCacheDisabled>
@@ -212,7 +212,7 @@
   &quot;elementValueMap&quot; : {
     &quot;isPortalUser&quot; : &quot;=%userProfile% != \&quot;System Administrator\&quot;&quot;,
     &quot;configDeveloperName&quot; : &quot;Permit_BuildingSingleDetached&quot;,
-    &quot;recordID&quot; : &quot;=IF(%isPortalUser%, %proposal%, %ContextId%)&quot;,
+    &quot;recordID&quot; : &quot;=IF(%isPortalUser%, IF(%Org_Type% == \&quot;LPI\&quot;, %parid%, %proposal%), %ContextId%)&quot;,
     &quot;Org_Type&quot; : &quot;LPI&quot;
   },
   &quot;showPersistentComponent&quot; : [ true, false ],
