@@ -16,8 +16,8 @@ Reusable Salesforce LWC that renders a review/summary view for intake forms in *
 |:----------|:--------|
 | **intakeFormReviewSummary** | Main review/summary; uses `labelData` + form data. |
 | **budgetDisplayReadOnly** | Read-only budget; uses `IntakeFormReviewSummaryController.getBudgetDetail`. |
-| **documentDisplayReadOnly** | Read-only documents; uses `IntakeFormReviewSummaryController.getDocumentDetail`. |
-| **IntakeFormReviewSummaryController** | Apex; `getBudgetDetail`, `getDocumentDetail` (OmniStudio interface). |
+| **unifiedDocumentDisplay** | Read-only documents (LPI + GRANTS); uses `IntakeFormReviewSummaryController.getDocuments` (or legacy `getDocumentDetail`). |
+| **IntakeFormReviewSummaryController** | Apex; `getBudgetDetail`, `getDocumentDetail`, `getDocuments` (OmniStudio interface). |
 
 ## How to Use
 
@@ -33,12 +33,12 @@ Reusable Salesforce LWC that renders a review/summary view for intake forms in *
 ## Deployment
 
 * Deploy all: `sf project deploy start -x manifest/package.xml -o <org-alias>`.
-* Deploy LWCs: `sf project deploy start -p force-app/main/default/lwc/<componentName> -o <org-alias>` (e.g. intakeFormReviewSummary, budgetDisplayReadOnly, documentDisplayReadOnly).
+* Deploy LWCs: `sf project deploy start -p force-app/main/default/lwc/<componentName> -o <org-alias>` (e.g. intakeFormReviewSummary, budgetDisplayReadOnly, unifiedDocumentDisplay).
 * Deploy Apex: `sf project deploy start -p force-app/main/default/classes/IntakeFormReviewSummaryController.cls -o <org-alias>`.
 * Deploy Custom Metadata: `sf project deploy start -p force-app/main/default/objects/Form_Review_Config__mdt -o <org-alias>` and `sf project deploy start -p force-app/main/default/customMetadata -o <org-alias>`.
 * Retrieve: `sf project retrieve start -x manifest/package.xml -o <org-alias>`.
 
-**Manifest:** ApexClass (IntakeFormReviewSummaryController), CustomObject (Form_Review_Config__mdt), CustomMetadata (MAEOED_Proposal_Config, NB_Teacher_Certification_Config), LightningComponentBundle (budgetDisplayReadOnly, documentDisplayReadOnly, intakeFormReviewSummary), OmniScript (POC_reviewsummary_English_2).
+**Manifest:** ApexClass (IntakeFormReviewSummaryController), CustomObject (Form_Review_Config__mdt), CustomMetadata (MAEOED_Proposal_Config, NB_Teacher_Certification_Config), LightningComponentBundle (budgetDisplayReadOnly, unifiedDocumentDisplay, intakeFormReviewSummary), OmniScript (POC_reviewsummary_English_2).
 
 ## Label JSON
 

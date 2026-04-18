@@ -1,53 +1,59 @@
 import { LightningElement, api, track } from 'lwc';
 
 /**
- * Config-driven synthetic sections. Budget step: embed c-budget-display-read-only (same omnistudio namespace; fetches via OmniScript action).
- * Document step: embed c-document-display-read-only (same pattern).
+ * Config-driven synthetic sections embedded into the review summary.
+ *   BudgetStep   -> c-budget-display-read-only (GRANTS only, proposal-based)
+ *   DocumentStep -> c-unified-document-display (LPI + GRANTS, driven by Org_Type)
+ *
+ * `orgTypes` lists the Org_Type values that enable each section. When omitted the
+ * section is enabled for all orgs.
  */
 const SECTION_CONFIG = {
     BudgetStep: {
         order: 4.5,
-        isVisible: false,
         sectionTitle: 'Budget Review',
         recordIdFields: ['recordId', 'proposalId', 'ProposalId', 'proposalID', 'Proposal__c', 'proposal__c'],
-        recordPageObject: 'Proposal__c'
+        orgTypes: ['GRANTS']
     },
     DocumentStep: {
         order: 4.6,
-        isVisible: false,
         sectionTitle: 'Document Review',
-        recordIdFields: ['recordId', 'proposalId', 'ProposalId', 'proposalID', 'Proposal__c', 'proposal__c'],
-        recordPageObject: 'Proposal__c'
+        // LPI: PAR/BLA Id. GRANTS: proposal Id. Both are covered by the ordered lookup below.
+        recordIdFields: [
+            'recordId', 'recordID', 'ContextId',
+            'parId', 'PARId', 'PAR__c',
+            'blaId', 'BLAId', 'Business_License_Application__c',
+            'proposalId', 'ProposalId', 'proposalID', 'Proposal__c', 'proposal__c'
+        ],
+        orgTypes: ['LPI', 'GRANTS']
     }
 };
 
+const ORG_TYPE_FIELDS = ['Org_Type', 'OrgType', 'orgType', 'org_type'];
+
 /**
- * @description Utility LWC to display Review and Summary for intake forms
- *              Works on record pages and as custom LWC inside OmniStudio
- *              Handles nested objects and arrays dynamically
+ * @description Utility LWC to display Review and Summary for intake forms.
+ *              Designed to run as a Custom LWC inside OmniStudio OmniScripts.
+ *              Reads data from `omniJsonData` and handles nested objects/arrays.
  */
 export default class IntakeFormReviewSummary extends LightningElement {
 
     // OmniScript data - received when used as Custom LWC in OmniStudio
     @api omniJsonData;
 
-    // API properties for use on record pages
-    @api formData;
-    @api labelData;
-    @api title = '';
+    // Optional: hide fields whose value is empty
     @api hideEmptyFields = false;
-    @api collapsibleSections = false;
 
-    // Configurable fields to skip (comma-separated string or array)
+    // Configurable fields to skip (comma-separated string). Appended to built-in skip list.
     @api
     get skipFieldsList() {
-        return this._skipFields.join(',');
+        return this._customSkipFields.join(',');
     }
     set skipFieldsList(value) {
         if (typeof value === 'string') {
-            this._skipFields = value.split(',').map(f => f.trim()).filter(f => f);
+            this._customSkipFields = value.split(',').map(f => f.trim()).filter(f => f);
         } else if (Array.isArray(value)) {
-            this._skipFields = value;
+            this._customSkipFields = value;
         }
     }
 
@@ -61,14 +67,29 @@ export default class IntakeFormReviewSummary extends LightningElement {
     _formData = null;
     _labelData = null;
 
-    // Default fields to skip (can be overridden via skipFieldsList)
-    _skipFields = [];
+    // OmniScript metadata keys that should never render as sections
+    _systemSkipFields = [
+        'objectApiName', 'fieldsList', 'recordId', 'recordID',
+        'ContextId', 'userProfile', 'timeStamp', 'userTimeZoneName',
+        'userTimeZone', 'userCurrencyCode', 'userName', 'userId',
+        'omniProcessId', 'localTimeZoneName', 'configDeveloperName',
+        'isPortalUser', 'labelData', 'labels', 'fieldLabels',
+        'formData', 'reviewData'
+    ];
 
+    // User-provided skip fields via skipFieldsList property
+    _customSkipFields = [];
+
+    // Combined skip list used at processing time
+    get _skipFields() {
+        return [...this._systemSkipFields, ...this._customSkipFields];
+    }
+
+    _lastOmniDataRef = null;
     _lastOmniDataHash = null;
-    _isInitialized = false;
 
     connectedCallback() {
-        if (this.omniJsonData || this.formData) {
+        if (this.omniJsonData) {
             this.initializeData();
         }
     }
@@ -78,86 +99,66 @@ export default class IntakeFormReviewSummary extends LightningElement {
      *              Also handles initial data arrival in OmniScript Preview
      */
     renderedCallback() {
-        // Handle initial data arrival or data changes
-        if (this.omniJsonData) {
-            const currentHash = JSON.stringify(this.omniJsonData);
-            if (this._lastOmniDataHash !== currentHash) {
-                this._lastOmniDataHash = currentHash;
-                this.initializeData();
-            }
-        } else if (!this._isInitialized && this.formData) {
+        if (!this.omniJsonData) return;
+        // Fast path: reference equality. Fallback: stringify (only when reference differs).
+        if (this._lastOmniDataRef === this.omniJsonData) return;
+        const currentHash = JSON.stringify(this.omniJsonData);
+        if (this._lastOmniDataHash !== currentHash) {
+            this._lastOmniDataRef = this.omniJsonData;
+            this._lastOmniDataHash = currentHash;
             this.initializeData();
+        } else {
+            this._lastOmniDataRef = this.omniJsonData;
         }
     }
 
     /**
-     * @description Initialize data from either API properties or OmniScript
+     * @description Initialize data from OmniScript payload
      */
     initializeData() {
-        // Reset state on each initialization attempt
         this.hasError = false;
         this.errorMessage = '';
         this.isLoading = true;
-        this._isInitialized = true;
 
         try {
-            // Try to get data from OmniScript first
-            if (this.omniJsonData) {
-
-                // OmniStudio passes data in different ways:
-                // 1. As specific properties: formData, labelData
-                // 2. As the entire JSON data (form values are in the root)
-                // 3. As a specific step/node
-
-                this._formData = this.omniJsonData.formData
-                    || this.omniJsonData.reviewData
-                    || this.omniJsonData;
-
-                // Get label data - may be string or object
-                let labelSource = this.omniJsonData.labelData
-                    || this.omniJsonData.labels
-                    || this.omniJsonData.fieldLabels
-                    || {};
-
-                // Parse if labelData is a string (from Set Values with quoted JSON)
-                if (typeof labelSource === 'string') {
-                    try {
-                        this._labelData = JSON.parse(labelSource);
-                    } catch (e) {
-                        console.warn('Failed to parse labelData string:', e);
-                        this._labelData = {};
-                    }
-                } else {
-                    this._labelData = labelSource;
-                }
-            }
-
-            // Override with API properties if provided (for Record Page usage)
-            if (this.formData) {
-                this._formData = typeof this.formData === 'string'
-                    ? JSON.parse(this.formData)
-                    : this.formData;
-            }
-
-            if (this.labelData) {
-                this._labelData = typeof this.labelData === 'string'
-                    ? JSON.parse(this.labelData)
-                    : this.labelData;
-            }
-
-            if (this._formData) {
-                this.processFormData();
-            } else {
+            if (!this.omniJsonData) {
                 this.hasError = true;
-                this.errorMessage = 'No form data provided.';
+                this.errorMessage = 'No OmniScript data provided.';
+                this.isLoading = false;
+                return;
             }
 
+            // Form data: prefer nested formData/reviewData, else treat whole payload as form data
+            this._formData = this.omniJsonData.formData
+                || this.omniJsonData.reviewData
+                || this.omniJsonData;
+
+            // Label data: object or JSON string
+            const labelSource = this.omniJsonData.labelData
+                || this.omniJsonData.labels
+                || this.omniJsonData.fieldLabels
+                || {};
+            this._labelData = typeof labelSource === 'string'
+                ? this._safeParseJson(labelSource, {})
+                : labelSource;
+
+            this.processFormData();
             this.isLoading = false;
         } catch (error) {
-            console.error('Error initializing data:', error);
             this.hasError = true;
             this.errorMessage = 'Error processing form data: ' + error.message;
             this.isLoading = false;
+        }
+    }
+
+    /**
+     * @description Safely parse JSON string, returning fallback on failure
+     */
+    _safeParseJson(value, fallback) {
+        try {
+            return JSON.parse(value);
+        } catch (e) {
+            return fallback;
         }
     }
 
@@ -185,12 +186,7 @@ export default class IntakeFormReviewSummary extends LightningElement {
 
             // Parse JSON string if the value is a string (from Long Text Area fields)
             if (typeof value === 'string') {
-                try {
-                    value = JSON.parse(value);
-                } catch (e) {
-                    console.warn(`Failed to parse JSON for section ${key}:`, e);
-                    value = undefined;
-                }
+                value = this._safeParseJson(value, undefined);
             }
 
             // When value is missing (e.g. internal user OmniScript only passed labelData, not step data),
@@ -269,12 +265,16 @@ export default class IntakeFormReviewSummary extends LightningElement {
 
     /**
      * @description Build synthetic sections from SECTION_CONFIG (e.g. Budget Review, Document Review).
-     * Injects steps with recordId; summary embeds child LWCs (c-budget-display-read-only, c-document-display-read-only).
+     * Injects steps with recordId; summary embeds child LWCs (c-budget-display-read-only, c-unified-document-display).
      */
     buildSyntheticSections() {
         const out = [];
+        const orgType = this.getOrgType();
         for (const [sectionId, config] of Object.entries(SECTION_CONFIG)) {
-            if (!config.isVisible) continue;
+            // Skip sections whose orgTypes list does not include the current org
+            if (Array.isArray(config.orgTypes) && config.orgTypes.length > 0) {
+                if (!orgType || !config.orgTypes.includes(orgType)) continue;
+            }
             const recordId = this.getRecordIdFromConfig(sectionId);
             if (!recordId) continue;
             const isBudget = sectionId === 'BudgetStep';
@@ -289,6 +289,7 @@ export default class IntakeFormReviewSummary extends LightningElement {
                 showBudgetChild: isBudget,
                 showDocumentChild: isDocument,
                 recordId: recordId,
+                orgType: orgType,
                 blocks: [],
                 fields: [],
                 hasFields: false,
@@ -296,6 +297,24 @@ export default class IntakeFormReviewSummary extends LightningElement {
             });
         }
         return out;
+    }
+
+    /**
+     * @description Read Org_Type from omniJsonData (root) or from the active form data.
+     *              Returns the value upper-cased, or null if absent.
+     */
+    getOrgType() {
+        const pick = (obj) => {
+            if (!obj || typeof obj !== 'object') return null;
+            for (const key of ORG_TYPE_FIELDS) {
+                const v = obj[key];
+                if (v !== undefined && v !== null && v !== '') {
+                    return String(v).trim().toUpperCase();
+                }
+            }
+            return null;
+        };
+        return pick(this.omniJsonData) || pick(this._formData) || null;
     }
 
     /**
@@ -954,13 +973,6 @@ export default class IntakeFormReviewSummary extends LightningElement {
      */
     get hasSections() {
         return this.processedSections && this.processedSections.length > 0;
-    }
-
-    /**
-     * @description Check if title is provided (non-empty)
-     */
-    get hasTitle() {
-        return this.title && this.title.trim().length > 0;
     }
 
     /**

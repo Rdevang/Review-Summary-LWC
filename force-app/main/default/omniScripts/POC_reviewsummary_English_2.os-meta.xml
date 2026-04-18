@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <OmniScript xmlns="http://soap.sforce.com/2006/04/metadata">
     <elementTypeComponentMapping>{&quot;ElementTypeToHTMLTemplateList&quot;:[]}</elementTypeComponentMapping>
-    <isActive>false</isActive>
+    <isActive>true</isActive>
     <isIntegrationProcedure>false</isIntegrationProcedure>
     <isManagedUsingStdDesigner>false</isManagedUsingStdDesigner>
     <isMetadataCacheDisabled>false</isMetadataCacheDisabled>
@@ -14,16 +14,16 @@
         <isActive>true</isActive>
         <isOmniScriptEmbeddable>false</isOmniScriptEmbeddable>
         <level>0.0</level>
-        <name>DRExtractDataJSON</name>
+        <name>DRExtractCALPARData</name>
         <omniProcessVersionNumber>0.0</omniProcessVersionNumber>
         <propertySetConfig>{
   &quot;controlWidth&quot; : 12,
-  &quot;label&quot; : &quot;DRExtractDataJSON&quot;,
-  &quot;bundle&quot; : &quot;DRExtractMAEOEDProposalData&quot;,
+  &quot;label&quot; : &quot;DRExtractCALPARData&quot;,
+  &quot;bundle&quot; : &quot;DRExtractCALPARData&quot;,
   &quot;ignoreCache&quot; : false,
   &quot;dataRaptor Input Parameters&quot; : [ {
-    &quot;element&quot; : &quot;proposalID&quot;,
-    &quot;inputParam&quot; : &quot;propID&quot;
+    &quot;element&quot; : &quot;recordID&quot;,
+    &quot;inputParam&quot; : &quot;recordID&quot;
   } ],
   &quot;remoteTimeout&quot; : 30000,
   &quot;responseJSONPath&quot; : &quot;&quot;,
@@ -132,9 +132,18 @@
   &quot;show&quot; : null,
   &quot;conditionType&quot; : &quot;Hide if False&quot;,
   &quot;hide&quot; : false,
-  &quot;lwcName&quot; : &quot;intakeFormReviewSummary&quot;,
+  &quot;lwcName&quot; : &quot;pocIntakeformreviewsummary&quot;,
   &quot;bStandalone&quot; : false,
-  &quot;customAttributes&quot; : [ ]
+  &quot;customAttributes&quot; : [ {
+    &quot;name&quot; : &quot;object-api-name&quot;,
+    &quot;source&quot; : &quot;%objectApiName%&quot;
+  }, {
+    &quot;name&quot; : &quot;fields-list&quot;,
+    &quot;source&quot; : &quot;%fieldsList%&quot;
+  }, {
+    &quot;name&quot; : &quot;record-id&quot;,
+    &quot;source&quot; : &quot;%recordID%&quot;
+  } ]
 }</propertySetConfig>
             <sequenceNumber>0.0</sequenceNumber>
             <type>Custom Lightning Web Component</type>
@@ -201,9 +210,10 @@
   &quot;controlWidth&quot; : 12,
   &quot;label&quot; : &quot;Set Values&quot;,
   &quot;elementValueMap&quot; : {
-    &quot;proposalID&quot; : &quot;=IF(%isPortalUser%, %proposal%, %ContextId%)&quot;,
     &quot;isPortalUser&quot; : &quot;=%userProfile% != \&quot;System Administrator\&quot;&quot;,
-    &quot;configDeveloperName&quot; : &quot;MAEOED_Proposal_Config&quot;
+    &quot;configDeveloperName&quot; : &quot;Permit_BuildingSingleDetached&quot;,
+    &quot;recordID&quot; : &quot;=IF(%isPortalUser%, %proposal%, %ContextId%)&quot;,
+    &quot;Org_Type&quot; : &quot;LPI&quot;
   },
   &quot;showPersistentComponent&quot; : [ true, false ],
   &quot;show&quot; : null,
@@ -222,5 +232,5 @@
     <type>POC</type>
     <uniqueName>POC_reviewsummary_English_2</uniqueName>
     <versionNumber>2.0</versionNumber>
-    <webComponentKey>d2a6fbbc-2fa4-ee9c-7bb3-38ab30076db2</webComponentKey>
+    <webComponentKey>96ec6703-5a0b-4864-6af5-2fa389a825ba</webComponentKey>
 </OmniScript>

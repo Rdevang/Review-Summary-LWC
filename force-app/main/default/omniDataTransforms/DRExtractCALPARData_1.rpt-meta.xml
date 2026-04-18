@@ -47,21 +47,6 @@
     <omniDataTransformItem>
         <disabled>false</disabled>
         <filterGroup>0.0</filterGroup>
-        <globalKey>DRExtractCALPARDataCustom9540</globalKey>
-        <inputFieldName>par:AdditionalQuestions__c</inputFieldName>
-        <inputObjectQuerySequence>0.0</inputObjectQuerySequence>
-        <linkedObjectSequence>0.0</linkedObjectSequence>
-        <name>DRExtractCALPARData</name>
-        <outputCreationSequence>1.0</outputCreationSequence>
-        <outputFieldFormat>Object</outputFieldFormat>
-        <outputFieldName>AdditionalQuestions</outputFieldName>
-        <outputObjectName>json</outputObjectName>
-        <requiredForUpsert>false</requiredForUpsert>
-        <upsertKey>false</upsertKey>
-    </omniDataTransformItem>
-    <omniDataTransformItem>
-        <disabled>false</disabled>
-        <filterGroup>0.0</filterGroup>
         <globalKey>DRExtractCALPARDataCustom785</globalKey>
         <inputFieldName>par:ApplicantOwnershipDetails__c</inputFieldName>
         <inputObjectQuerySequence>0.0</inputObjectQuerySequence>
@@ -70,6 +55,53 @@
         <outputCreationSequence>1.0</outputCreationSequence>
         <outputFieldFormat>Object</outputFieldFormat>
         <outputFieldName>ApplicantOwnershipDetails</outputFieldName>
+        <outputObjectName>json</outputObjectName>
+        <requiredForUpsert>false</requiredForUpsert>
+        <upsertKey>false</upsertKey>
+    </omniDataTransformItem>
+    <omniDataTransformItem>
+        <disabled>false</disabled>
+        <filterGroup>0.0</filterGroup>
+        <filterOperator>=</filterOperator>
+        <filterValue>recordID</filterValue>
+        <globalKey>DRExtractCALPARDataCustom9473</globalKey>
+        <inputFieldName>Id</inputFieldName>
+        <inputObjectName>PreliminaryApplicationRef</inputObjectName>
+        <inputObjectQuerySequence>1.0</inputObjectQuerySequence>
+        <linkedObjectSequence>0.0</linkedObjectSequence>
+        <name>DRExtractCALPARData</name>
+        <outputCreationSequence>0.0</outputCreationSequence>
+        <outputFieldName>par</outputFieldName>
+        <outputObjectName>json</outputObjectName>
+        <requiredForUpsert>false</requiredForUpsert>
+        <upsertKey>false</upsertKey>
+    </omniDataTransformItem>
+    <omniDataTransformItem>
+        <disabled>false</disabled>
+        <filterGroup>0.0</filterGroup>
+        <globalKey>DRExtractCALPARDataCustom6363</globalKey>
+        <inputFieldName>par:ProjectDetails__c</inputFieldName>
+        <inputObjectQuerySequence>0.0</inputObjectQuerySequence>
+        <linkedObjectSequence>0.0</linkedObjectSequence>
+        <name>DRExtractCALPARData</name>
+        <outputCreationSequence>1.0</outputCreationSequence>
+        <outputFieldFormat>Object</outputFieldFormat>
+        <outputFieldName>ProjectDetails</outputFieldName>
+        <outputObjectName>json</outputObjectName>
+        <requiredForUpsert>false</requiredForUpsert>
+        <upsertKey>false</upsertKey>
+    </omniDataTransformItem>
+    <omniDataTransformItem>
+        <disabled>false</disabled>
+        <filterGroup>0.0</filterGroup>
+        <globalKey>DRExtractCALPARDataCustom9540</globalKey>
+        <inputFieldName>par:AdditionalQuestions__c</inputFieldName>
+        <inputObjectQuerySequence>0.0</inputObjectQuerySequence>
+        <linkedObjectSequence>0.0</linkedObjectSequence>
+        <name>DRExtractCALPARData</name>
+        <outputCreationSequence>1.0</outputCreationSequence>
+        <outputFieldFormat>Object</outputFieldFormat>
+        <outputFieldName>AdditionalQuestions</outputFieldName>
         <outputObjectName>json</outputObjectName>
         <requiredForUpsert>false</requiredForUpsert>
         <upsertKey>false</upsertKey>
@@ -104,76 +136,8 @@
         <requiredForUpsert>false</requiredForUpsert>
         <upsertKey>false</upsertKey>
     </omniDataTransformItem>
-    <omniDataTransformItem>
-        <disabled>false</disabled>
-        <filterGroup>0.0</filterGroup>
-        <filterOperator>=</filterOperator>
-        <filterValue>recordID</filterValue>
-        <globalKey>DRExtractCALPARDataCustom9473</globalKey>
-        <inputFieldName>Id</inputFieldName>
-        <inputObjectName>PreliminaryApplicationRef</inputObjectName>
-        <inputObjectQuerySequence>2.0</inputObjectQuerySequence>
-        <linkedObjectSequence>0.0</linkedObjectSequence>
-        <name>DRExtractCALPARData</name>
-        <outputCreationSequence>0.0</outputCreationSequence>
-        <outputFieldName>par</outputFieldName>
-        <outputObjectName>json</outputObjectName>
-        <requiredForUpsert>false</requiredForUpsert>
-        <upsertKey>false</upsertKey>
-    </omniDataTransformItem>
-    <omniDataTransformItem>
-        <disabled>false</disabled>
-        <filterGroup>1.0</filterGroup>
-        <filterOperator>=</filterOperator>
-        <filterValue>recordID</filterValue>
-        <globalKey>DRExtractCALPARDataCustom656</globalKey>
-        <inputFieldName>Id</inputFieldName>
-        <inputObjectName>BusinessLicenseApplication</inputObjectName>
-        <inputObjectQuerySequence>1.0</inputObjectQuerySequence>
-        <linkedObjectSequence>0.0</linkedObjectSequence>
-        <name>DRExtractCALPARData</name>
-        <outputCreationSequence>0.0</outputCreationSequence>
-        <outputFieldName>bla</outputFieldName>
-        <outputObjectName>json</outputObjectName>
-        <requiredForUpsert>false</requiredForUpsert>
-        <upsertKey>false</upsertKey>
-    </omniDataTransformItem>
-    <omniDataTransformItem>
-        <disabled>false</disabled>
-        <filterGroup>1.0</filterGroup>
-        <filterOperator>=</filterOperator>
-        <filterValue>bla:SavedApplicationRefId</filterValue>
-        <globalKey>DRExtractCALPARDataCustom7414</globalKey>
-        <inputFieldName>Id</inputFieldName>
-        <inputObjectName>PreliminaryApplicationRef</inputObjectName>
-        <inputObjectQuerySequence>2.0</inputObjectQuerySequence>
-        <linkedObjectSequence>0.0</linkedObjectSequence>
-        <name>DRExtractCALPARData</name>
-        <outputCreationSequence>0.0</outputCreationSequence>
-        <outputFieldName>par</outputFieldName>
-        <outputObjectName>json</outputObjectName>
-        <requiredForUpsert>false</requiredForUpsert>
-        <upsertKey>false</upsertKey>
-    </omniDataTransformItem>
-    <omniDataTransformItem>
-        <disabled>false</disabled>
-        <filterGroup>0.0</filterGroup>
-        <globalKey>DRExtractCALPARDataCustom6363</globalKey>
-        <inputFieldName>par:ProjectDetails__c</inputFieldName>
-        <inputObjectQuerySequence>0.0</inputObjectQuerySequence>
-        <linkedObjectSequence>0.0</linkedObjectSequence>
-        <name>DRExtractCALPARData</name>
-        <outputCreationSequence>1.0</outputCreationSequence>
-        <outputFieldFormat>Object</outputFieldFormat>
-        <outputFieldName>ProjectDetails</outputFieldName>
-        <outputObjectName>json</outputObjectName>
-        <requiredForUpsert>false</requiredForUpsert>
-        <upsertKey>false</upsertKey>
-    </omniDataTransformItem>
     <outputType>JSON</outputType>
-    <previewJsonData>{
-  &quot;recordID&quot; : &quot;0goWF0000006jYkYAI&quot;
-}</previewJsonData>
+    <previewJsonData>{ }</previewJsonData>
     <processSuperBulk>false</processSuperBulk>
     <responseCacheTtlMinutes>0.0</responseCacheTtlMinutes>
     <rollbackOnError>false</rollbackOnError>

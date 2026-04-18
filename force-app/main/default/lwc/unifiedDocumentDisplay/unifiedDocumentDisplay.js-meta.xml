@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>52.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>Unified Document Display (Read Only)</masterLabel>
+    <runtimeNamespace>omnistudio</runtimeNamespace>
+    <description>Read-only document list supporting both LPI (Application_Document__c by PAR/BLA) and GRANTS (proposal) via IntakeFormReviewSummaryController.getDocuments.</description>
+</LightningComponentBundle>

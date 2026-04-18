@@ -15,7 +15,7 @@
     </types>
     <types>
         <members>budgetDisplayReadOnly</members>
-        <members>documentDisplayReadOnly</members>
+        <members>unifiedDocumentDisplay</members>
         <members>intakeFormReviewSummary</members>
         <name>LightningComponentBundle</name>
     </types>

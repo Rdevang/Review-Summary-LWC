@@ -23,28 +23,28 @@
                 </thead>
                 <tbody>
                     <template for:each={documents} for:item="doc">
-                        <tr class="slds-hint-parent" key={doc.documentRecord.Id}>
+                        <tr class="slds-hint-parent" key={doc.id}>
                             <td data-label="Document Name" scope="row">
-                                <div class="slds-truncate" title={doc.documentRecord.Document_Title__c}>
-                                    {doc.documentRecord.Document_Title__c}
-                                    <template lwc:if={doc.documentRecord.Mandatory_by_default__c}>
-                                        <span class="slds-text-color_destructive">*</span>
+                                <div class="slds-truncate" title={doc.title}>
+                                    {doc.title}
+                                    <template lwc:if={doc.mandatory}>
+                                        <span class="slds-text-color_destructive" aria-label="Required">*</span>
                                     </template>
                                 </div>
                             </td>
                             <td data-label="Status">
-                                <div class="slds-truncate" title={doc.documentRecord.Status__c}>{doc.documentRecord.Status__c}</div>
+                                <div class="slds-truncate" title={doc.status}>{doc.status}</div>
                             </td>
                             <td data-label="Submitted Date">
-                                <template lwc:if={doc.documentRecord.Submitted_Date__c}>
+                                <template lwc:if={doc.submittedDate}>
                                     <lightning-formatted-date-time
-                                        value={doc.documentRecord.Submitted_Date__c}
+                                        value={doc.submittedDate}
                                         year="numeric"
                                         month="numeric"
                                         day="numeric">
                                     </lightning-formatted-date-time>
                                 </template>
-                                <template lwc:else>—</template>
+                                <template lwc:else>&mdash;</template>
                             </td>
                             <td data-label="View">
                                 <template lwc:if={doc.contentDocumentId}>
@@ -67,7 +67,7 @@
                                     </lightning-button-icon>
                                 </template>
                                 <template lwc:if={doc.docNoView}>
-                                    <span class="slds-text-color_weak">—</span>
+                                    <span class="slds-text-color_weak">&mdash;</span>
                                 </template>
                             </td>
                         </tr>

@@ -59,7 +59,7 @@
                                 </template>
                                 <!-- Document Review: child LWC (read-only document list) -->
                                 <template lwc:elseif={section.showDocumentChild}>
-                                    <c-document-display-read-only record-id={section.recordId}></c-document-display-read-only>
+                                    <c-unified-document-display record-id={section.recordId} org-type={section.orgType}></c-unified-document-display>
                                 </template>
                                 <!-- Standard section fields and blocks -->
                                 <template lwc:else>
