@@ -6,6 +6,7 @@ Reusable Salesforce LWC that renders a review/summary view for intake forms in *
 
 * [Components](#components)
 * [How to Use](#how-to-use)
+* [OmniScript Set Values](#omniscript-set-values)
 * [Deployment](#deployment)
 * [Label JSON](#label-json)
 * [More Documentation](#more-documentation)
@@ -29,6 +30,30 @@ Reusable Salesforce LWC that renders a review/summary view for intake forms in *
 6. Create DataRaptor Extract for form data: extract those Long Text fields, filter by record Id, map output paths to the same keys as in labelData (e.g. `StepName_Step`).
 7. Create OmniScript: SetValues (e.g. `configDeveloperName`, `recordId`) → DRExtractLabelJSON (input `configDeveloperName`) → DRExtract form data (input `recordId`) → Step with Custom LWC `intakeFormReviewSummary`.
 8. Activate OmniScript and Preview; set Record Id on Budget/Document components when used standalone or in review summary.
+
+## OmniScript Set Values
+
+In the OmniScript **Set Values** step, use **`elementValueMap`** (or equivalent) so the LWC and DataRaptors get the right **config**, **record id**, and **org flavor**. The review summary reads **`Org_Type`** to show the correct synthetic sections (Budget vs Document) and to drive **`c-unified-document-display`** (`LPI` vs `GRANTS`).
+
+| Key | Role |
+|:----|:-----|
+| **`isPortalUser`** | Expression such as `=%userProfile% != "System Administrator"` so you can branch portal vs internal behavior. |
+| **`configDeveloperName`** | **Form_Review_Config__mdt** `DeveloperName` for label JSON (e.g. `Permit_BuildingSingleDetached`). |
+| **`Org_Type`** | **`LPI`** or **`GRANTS`**. Must match the program; affects document/budget wiring and which **SECTION_CONFIG** steps apply. |
+| **`recordID`** | Record context for extracts and child LWCs. Typical pattern: portal users use **`parid`** when `Org_Type` is `LPI` and **`proposal`** when `GRANTS`; internal users use **`ContextId`**. Adjust merge fields to match your OmniScript. |
+
+Example **`elementValueMap`** (expressions use your OmniScript merge-field / formula syntax):
+
+```json
+{
+  "isPortalUser": "=%userProfile% != \"System Administrator\"",
+  "configDeveloperName": "Permit_BuildingSingleDetached",
+  "recordID": "=IF(%isPortalUser%, IF(%Org_Type% == \"LPI\", %parid%, %proposal%), %ContextId%)",
+  "Org_Type": "LPI"
+}
+```
+
+For a **GRANTS** flow, set **`Org_Type`** to **`GRANTS`** (and ensure **`recordID`** / proposal merge fields align with your script).
 
 ## Deployment
 
