@@ -53,6 +53,47 @@
     padding: 0;
 }
 
+/* Section Header Row: header (toggle) + actions (edit/save/cancel) */
+.section-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.section-header-row .section-header {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.section-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex-shrink: 0;
+}
+
+/* Address sub-fields grid in edit mode */
+.address-sub-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.address-sub-field {
+    min-width: 0;
+}
+
+/* Narrow last-column actions in edit tables */
+.data-table th.row-actions-col,
+.data-table td.row-actions-col {
+    width: 3rem;
+    text-align: center;
+    white-space: nowrap;
+}
+
 /* Section Header - Simple text with chevron */
 .section-header {
     display: flex;
@@ -301,6 +342,10 @@
     .data-table th,
     .data-table td {
         padding: 0.375rem 0.5rem;
+    }
+
+    .address-sub-grid {
+        grid-template-columns: 1fr;
     }
 }
 

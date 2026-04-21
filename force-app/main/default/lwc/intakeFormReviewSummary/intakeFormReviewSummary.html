@@ -23,23 +23,55 @@
                 <!-- Sections Loop -->
                 <template for:each={processedSections} for:item="section">
                     <div key={section.id} class="section">
-                        <!-- Section Header -->
-                        <div 
-                            class="section-header" 
-                            data-section-id={section.id} 
-                            onclick={handleSectionToggle}
-                            onkeydown={handleSectionKeydown}
-                            tabindex="0"
-                            role="button"
-                            aria-expanded={section.isExpanded}
-                            aria-controls={section.contentId}>
-                            <lightning-icon 
-                                icon-name={section.chevronIcon}
-                                size="x-small" 
-                                class="chevron-icon"
-                                aria-hidden="true">
-                            </lightning-icon>
-                            <span class="section-title">{section.title}</span>
+                        <!-- Section Header Row (title + actions) -->
+                        <div class="section-header-row">
+                            <div
+                                class="section-header"
+                                data-section-id={section.id}
+                                onclick={handleSectionToggle}
+                                onkeydown={handleSectionKeydown}
+                                tabindex="0"
+                                role="button"
+                                aria-expanded={section.isExpanded}
+                                aria-controls={section.contentId}>
+                                <lightning-icon
+                                    icon-name={section.chevronIcon}
+                                    size="x-small"
+                                    class="chevron-icon"
+                                    aria-hidden="true">
+                                </lightning-icon>
+                                <span class="section-title">{section.title}</span>
+                            </div>
+
+                            <template lwc:if={section.showActions}>
+                                <div class="section-actions" onclick={handleActionClick}>
+                                    <template lwc:if={section.isEditing}>
+                                        <lightning-button
+                                            variant="brand"
+                                            label="Save"
+                                            data-section-id={section.id}
+                                            onclick={handleSaveSection}
+                                            class="slds-m-left_x-small">
+                                        </lightning-button>
+                                        <lightning-button
+                                            variant="neutral"
+                                            label="Cancel"
+                                            data-section-id={section.id}
+                                            onclick={handleCancelSection}
+                                            class="slds-m-left_x-small">
+                                        </lightning-button>
+                                    </template>
+                                    <template lwc:else>
+                                        <lightning-button
+                                            variant="neutral"
+                                            label="Edit"
+                                            icon-name="utility:edit"
+                                            data-section-id={section.id}
+                                            onclick={handleEditSection}>
+                                        </lightning-button>
+                                    </template>
+                                </div>
+                            </template>
                         </div>
 
                         <!-- Section Content -->
@@ -58,20 +90,69 @@
                                 </template>
                                 <!-- Standard section fields and blocks -->
                                 <template lwc:else>
-                                <template lwc:if={section.hasFields}>
+                                    <template lwc:if={section.hasFields}>
                                         <div class="field-grid">
                                             <template for:each={section.fields} for:item="field">
                                                 <div key={field.id} class={field.spanClass}>
                                                     <div class="field-label">{field.label}</div>
-                                                    <template lwc:if={field.isMultiSelect}>
-                                                        <div class="field-value multiselect-pills" role="list" aria-label={field.label}>
-                                                            <template for:each={field.displayValues} for:item="pillItem">
-                                                                <span key={pillItem.id} class="pill" role="listitem">{pillItem.value}</span>
-                                                            </template>
-                                                        </div>
+
+                                                    <!-- EDIT MODE -->
+                                                    <template lwc:if={section.isEditing}>
+                                                        <!-- Address: per-sub-field inputs -->
+                                                        <template lwc:if={field.isAddressField}>
+                                                            <div class="address-sub-grid">
+                                                                <template for:each={field.addressSubFields} for:item="sub">
+                                                                    <div key={sub.id} class="address-sub-field">
+                                                                        <lightning-input
+                                                                            label={sub.label}
+                                                                            type={sub.inputType}
+                                                                            value={sub.rawValue}
+                                                                            checked={sub.booleanChecked}
+                                                                            formatter={sub.formatter}
+                                                                            data-path={sub.pathJson}
+                                                                            data-type={sub.fieldType}
+                                                                            onchange={handleFieldChange}>
+                                                                        </lightning-input>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </template>
+                                                        <!-- Multi-select: read-only in edit mode (v1) -->
+                                                        <template lwc:elseif={field.isMultiSelect}>
+                                                            <div class="field-value multiselect-pills" role="list" aria-label={field.label}>
+                                                                <template for:each={field.displayValues} for:item="pillItem">
+                                                                    <span key={pillItem.id} class="pill" role="listitem">{pillItem.value}</span>
+                                                                </template>
+                                                            </div>
+                                                        </template>
+                                                        <!-- Simple editable field -->
+                                                        <template lwc:else>
+                                                            <lightning-input
+                                                                label={field.label}
+                                                                variant="label-hidden"
+                                                                type={field.inputType}
+                                                                value={field.rawValue}
+                                                                checked={field.booleanChecked}
+                                                                formatter={field.formatter}
+                                                                data-path={field.pathJson}
+                                                                data-type={field.fieldType}
+                                                                onchange={handleFieldChange}>
+                                                            </lightning-input>
+                                                        </template>
                                                     </template>
+
+                                                    <!-- READ-ONLY MODE -->
                                                     <template lwc:else>
-                                                        <div class="field-value">{field.displayValue}</div>
+                                                        <template lwc:if={field.isMultiSelect}>
+                                                            <div class="field-value multiselect-pills" role="list" aria-label={field.label}>
+                                                                <template for:each={field.displayValues} for:item="pillItem">
+                                                                    <span key={pillItem.id} class="pill" role="listitem">{pillItem.value}</span>
+                                                                </template>
+                                                            </div>
+                                                        </template>
+                                                        <template lwc:else>
+                                                            <div class="field-value">{field.displayValue}</div>
+                                                        </template>
                                                     </template>
                                                 </div>
                                             </template>
@@ -82,7 +163,7 @@
                                     <template for:each={section.blocks} for:item="block">
                                         <div key={block.id} class="block">
                                             <div class="block-title">{block.title}</div>
-                                            
+
                                             <!-- Array Block - Use Table -->
                                             <template lwc:if={block.isArray}>
                                                 <div class="table-container">
@@ -93,6 +174,9 @@
                                                                 <template for:each={block.columns} for:item="col">
                                                                     <th key={col.fieldName} scope="col">{col.label}</th>
                                                                 </template>
+                                                                <template lwc:if={section.isEditing}>
+                                                                    <th scope="col" class="row-actions-col">Actions</th>
+                                                                </template>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
@@ -101,14 +185,53 @@
                                                                     <td>{item.index}</td>
                                                                     <template for:each={item.fields} for:item="itemField">
                                                                         <td key={itemField.id}>
-                                                                            <template lwc:if={itemField.isMultiSelect}>
-                                                                                <div class="multiselect-pills multiselect-pills-inline" role="list" aria-label={itemField.label}>
-                                                                                    <template for:each={itemField.displayValues} for:item="tablePill">
-                                                                                        <span key={tablePill.id} class="pill" role="listitem">{tablePill.value}</span>
-                                                                                    </template>
-                                                                                </div>
+                                                                            <!-- EDIT MODE cells -->
+                                                                            <template lwc:if={section.isEditing}>
+                                                                                <template lwc:if={itemField.isMultiSelect}>
+                                                                                    <div class="multiselect-pills multiselect-pills-inline" role="list" aria-label={itemField.label}>
+                                                                                        <template for:each={itemField.displayValues} for:item="tablePill">
+                                                                                            <span key={tablePill.id} class="pill" role="listitem">{tablePill.value}</span>
+                                                                                        </template>
+                                                                                    </div>
+                                                                                </template>
+                                                                                <template lwc:else>
+                                                                                    <lightning-input
+                                                                                        label={itemField.label}
+                                                                                        variant="label-hidden"
+                                                                                        type={itemField.inputType}
+                                                                                        value={itemField.rawValue}
+                                                                                        checked={itemField.booleanChecked}
+                                                                                        formatter={itemField.formatter}
+                                                                                        data-path={itemField.pathJson}
+                                                                                        data-type={itemField.fieldType}
+                                                                                        onchange={handleFieldChange}>
+                                                                                    </lightning-input>
+                                                                                </template>
                                                                             </template>
-                                                                            <template lwc:else>{itemField.displayValue}</template>
+                                                                            <!-- READ-ONLY cells -->
+                                                                            <template lwc:else>
+                                                                                <template lwc:if={itemField.isMultiSelect}>
+                                                                                    <div class="multiselect-pills multiselect-pills-inline" role="list" aria-label={itemField.label}>
+                                                                                        <template for:each={itemField.displayValues} for:item="tablePill">
+                                                                                            <span key={tablePill.id} class="pill" role="listitem">{tablePill.value}</span>
+                                                                                        </template>
+                                                                                    </div>
+                                                                                </template>
+                                                                                <template lwc:else>{itemField.displayValue}</template>
+                                                                            </template>
+                                                                        </td>
+                                                                    </template>
+                                                                    <template lwc:if={section.isEditing}>
+                                                                        <td class="row-actions-col">
+                                                                            <lightning-button-icon
+                                                                                icon-name="utility:delete"
+                                                                                variant="bare"
+                                                                                alternative-text="Delete row"
+                                                                                title="Delete row"
+                                                                                data-array-path={block.arrayPathJson}
+                                                                                data-row-index={item.rowIndex}
+                                                                                onclick={handleDeleteRow}>
+                                                                            </lightning-button-icon>
                                                                         </td>
                                                                     </template>
                                                                 </tr>
@@ -116,6 +239,18 @@
                                                         </tbody>
                                                     </table>
                                                 </div>
+                                                <template lwc:if={section.isEditing}>
+                                                    <div class="slds-m-top_x-small">
+                                                        <lightning-button
+                                                            variant="neutral"
+                                                            icon-name="utility:add"
+                                                            label="Add Row"
+                                                            data-array-path={block.arrayPathJson}
+                                                            data-row-schema={block.rowSchemaJson}
+                                                            onclick={handleAddRow}>
+                                                        </lightning-button>
+                                                    </div>
+                                                </template>
                                             </template>
 
                                             <!-- Regular Block: content order = label JSON order (fields + nested blocks interleaved) -->
@@ -126,15 +261,61 @@
                                                         <template lwc:if={contentItem.isField}>
                                                             <div key={contentItem.id} class={contentItem.item.spanClass}>
                                                                 <div class="field-label">{contentItem.item.label}</div>
-                                                                <template lwc:if={contentItem.item.isMultiSelect}>
-                                                                    <div class="field-value multiselect-pills" role="list" aria-label={contentItem.item.label}>
-                                                                        <template for:each={contentItem.item.displayValues} for:item="pillItem">
-                                                                            <span key={pillItem.id} class="pill" role="listitem">{pillItem.value}</span>
-                                                                        </template>
-                                                                    </div>
+
+                                                                <!-- EDIT MODE -->
+                                                                <template lwc:if={section.isEditing}>
+                                                                    <template lwc:if={contentItem.item.isAddressField}>
+                                                                        <div class="address-sub-grid">
+                                                                            <template for:each={contentItem.item.addressSubFields} for:item="sub">
+                                                                                <div key={sub.id} class="address-sub-field">
+                                                                                    <lightning-input
+                                                                                        label={sub.label}
+                                                                                        type={sub.inputType}
+                                                                                        value={sub.rawValue}
+                                                                                        checked={sub.booleanChecked}
+                                                                                        formatter={sub.formatter}
+                                                                                        data-path={sub.pathJson}
+                                                                                        data-type={sub.fieldType}
+                                                                                        onchange={handleFieldChange}>
+                                                                                    </lightning-input>
+                                                                                </div>
+                                                                            </template>
+                                                                        </div>
+                                                                    </template>
+                                                                    <template lwc:elseif={contentItem.item.isMultiSelect}>
+                                                                        <div class="field-value multiselect-pills" role="list" aria-label={contentItem.item.label}>
+                                                                            <template for:each={contentItem.item.displayValues} for:item="pillItem">
+                                                                                <span key={pillItem.id} class="pill" role="listitem">{pillItem.value}</span>
+                                                                            </template>
+                                                                        </div>
+                                                                    </template>
+                                                                    <template lwc:else>
+                                                                        <lightning-input
+                                                                            label={contentItem.item.label}
+                                                                            variant="label-hidden"
+                                                                            type={contentItem.item.inputType}
+                                                                            value={contentItem.item.rawValue}
+                                                                            checked={contentItem.item.booleanChecked}
+                                                                            formatter={contentItem.item.formatter}
+                                                                            data-path={contentItem.item.pathJson}
+                                                                            data-type={contentItem.item.fieldType}
+                                                                            onchange={handleFieldChange}>
+                                                                        </lightning-input>
+                                                                    </template>
                                                                 </template>
+
+                                                                <!-- READ-ONLY MODE -->
                                                                 <template lwc:else>
-                                                                    <div class="field-value">{contentItem.item.displayValue}</div>
+                                                                    <template lwc:if={contentItem.item.isMultiSelect}>
+                                                                        <div class="field-value multiselect-pills" role="list" aria-label={contentItem.item.label}>
+                                                                            <template for:each={contentItem.item.displayValues} for:item="pillItem">
+                                                                                <span key={pillItem.id} class="pill" role="listitem">{pillItem.value}</span>
+                                                                            </template>
+                                                                        </div>
+                                                                    </template>
+                                                                    <template lwc:else>
+                                                                        <div class="field-value">{contentItem.item.displayValue}</div>
+                                                                    </template>
                                                                 </template>
                                                             </div>
                                                         </template>
@@ -143,7 +324,27 @@
                                                             <div key={contentItem.id} class="nested-block span-12">
                                                                 <template lwc:if={contentItem.item.isAddressBlock}>
                                                                     <div class="nested-block-title">{contentItem.item.title}</div>
-                                                                    <div class="field-value address-value-only">{contentItem.item.fullAddressValue}</div>
+                                                                    <template lwc:if={section.isEditing}>
+                                                                        <div class="address-sub-grid">
+                                                                            <template for:each={contentItem.item.addressSubFields} for:item="sub">
+                                                                                <div key={sub.id} class="address-sub-field">
+                                                                                    <lightning-input
+                                                                                        label={sub.label}
+                                                                                        type={sub.inputType}
+                                                                                        value={sub.rawValue}
+                                                                                        checked={sub.booleanChecked}
+                                                                                        formatter={sub.formatter}
+                                                                                        data-path={sub.pathJson}
+                                                                                        data-type={sub.fieldType}
+                                                                                        onchange={handleFieldChange}>
+                                                                                    </lightning-input>
+                                                                                </div>
+                                                                            </template>
+                                                                        </div>
+                                                                    </template>
+                                                                    <template lwc:else>
+                                                                        <div class="field-value address-value-only">{contentItem.item.fullAddressValue}</div>
+                                                                    </template>
                                                                 </template>
                                                                 <template lwc:else>
                                                                     <div class="nested-block-title">{contentItem.item.title}</div>
@@ -151,15 +352,40 @@
                                                                         <template for:each={contentItem.item.fields} for:item="nestedField">
                                                                             <div key={nestedField.id} class={nestedField.spanClass}>
                                                                                 <div class="field-label">{nestedField.label}</div>
-                                                                                <template lwc:if={nestedField.isMultiSelect}>
-                                                                                    <div class="field-value multiselect-pills" role="list" aria-label={nestedField.label}>
-                                                                                        <template for:each={nestedField.displayValues} for:item="pillItem">
-                                                                                            <span key={pillItem.id} class="pill" role="listitem">{pillItem.value}</span>
-                                                                                        </template>
-                                                                                    </div>
+
+                                                                                <template lwc:if={section.isEditing}>
+                                                                                    <template lwc:if={nestedField.isMultiSelect}>
+                                                                                        <div class="field-value multiselect-pills" role="list" aria-label={nestedField.label}>
+                                                                                            <template for:each={nestedField.displayValues} for:item="pillItem">
+                                                                                                <span key={pillItem.id} class="pill" role="listitem">{pillItem.value}</span>
+                                                                                            </template>
+                                                                                        </div>
+                                                                                    </template>
+                                                                                    <template lwc:else>
+                                                                                        <lightning-input
+                                                                                            label={nestedField.label}
+                                                                                            variant="label-hidden"
+                                                                                            type={nestedField.inputType}
+                                                                                            value={nestedField.rawValue}
+                                                                                            checked={nestedField.booleanChecked}
+                                                                                            formatter={nestedField.formatter}
+                                                                                            data-path={nestedField.pathJson}
+                                                                                            data-type={nestedField.fieldType}
+                                                                                            onchange={handleFieldChange}>
+                                                                                        </lightning-input>
+                                                                                    </template>
                                                                                 </template>
                                                                                 <template lwc:else>
-                                                                                    <div class="field-value">{nestedField.displayValue}</div>
+                                                                                    <template lwc:if={nestedField.isMultiSelect}>
+                                                                                        <div class="field-value multiselect-pills" role="list" aria-label={nestedField.label}>
+                                                                                            <template for:each={nestedField.displayValues} for:item="pillItem">
+                                                                                                <span key={pillItem.id} class="pill" role="listitem">{pillItem.value}</span>
+                                                                                            </template>
+                                                                                        </div>
+                                                                                    </template>
+                                                                                    <template lwc:else>
+                                                                                        <div class="field-value">{nestedField.displayValue}</div>
+                                                                                    </template>
                                                                                 </template>
                                                                             </div>
                                                                         </template>

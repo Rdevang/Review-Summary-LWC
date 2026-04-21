@@ -1,4 +1,5 @@
 import { LightningElement, api, track } from 'lwc';
+import { OmniscriptBaseMixin } from 'omnistudio/omniscriptBaseMixin';
 
 /**
  * Config-driven synthetic sections embedded into the review summary.
@@ -31,12 +32,15 @@ const SECTION_CONFIG = {
 
 const ORG_TYPE_FIELDS = ['Org_Type', 'OrgType', 'orgType', 'org_type'];
 
+const USER_PROFILE_FIELDS = ['userProfile', 'UserProfile', 'profile'];
+const ADMIN_PROFILE = 'system administrator';
+
 /**
  * @description Utility LWC to display Review and Summary for intake forms.
  *              Designed to run as a Custom LWC inside OmniStudio OmniScripts.
  *              Reads data from `omniJsonData` and handles nested objects/arrays.
  */
-export default class IntakeFormReviewSummary extends LightningElement {
+export default class PocIntakeformreviewsummary extends OmniscriptBaseMixin(LightningElement) {
 
     // OmniScript data - received when used as Custom LWC in OmniStudio
     @api omniJsonData;
@@ -87,6 +91,10 @@ export default class IntakeFormReviewSummary extends LightningElement {
 
     _lastOmniDataRef = null;
     _lastOmniDataHash = null;
+
+    // Section-level edit state: drafts keyed by sectionId, Set of sectionIds currently in edit mode
+    _drafts = {};
+    _editingSections = new Set();
 
     connectedCallback() {
         if (this.omniJsonData) {
@@ -178,11 +186,16 @@ export default class IntakeFormReviewSummary extends LightningElement {
             // Skip system fields (configurable via skipFieldsList)
             if (this._skipFields.includes(key)) continue;
 
-            let value = this._formData[key];
             const labelInfo = this._labelData[key];
 
             // Skip if labelInfo is not a section (e.g. internal keys)
             if (!labelInfo || typeof labelInfo !== 'object') continue;
+
+            // Route section value to draft when that section is currently being edited,
+            // so inputs display the in-progress values.
+            let value = this._editingSections.has(key)
+                ? this._drafts[key]
+                : this._formData[key];
 
             // Parse JSON string if the value is a string (from Long Text Area fields)
             if (typeof value === 'string') {
@@ -265,7 +278,7 @@ export default class IntakeFormReviewSummary extends LightningElement {
 
     /**
      * @description Build synthetic sections from SECTION_CONFIG (e.g. Budget Review, Document Review).
-     * Injects steps with recordId; summary embeds child LWCs (c-budget-display-read-only, c-unified-document-display).
+     * Injects steps with recordId; summary embeds child LWCs (c-budget-display-read-only, c-document-display-read-only).
      */
     buildSyntheticSections() {
         const out = [];
@@ -293,10 +306,38 @@ export default class IntakeFormReviewSummary extends LightningElement {
                 blocks: [],
                 fields: [],
                 hasFields: false,
-                hasBlocks: false
+                hasBlocks: false,
+                isSynthetic: true,
+                isEditable: false,
+                isEditing: false,
+                showActions: false
             });
         }
         return out;
+    }
+
+    /**
+     * @description True when Edit/Save/Cancel controls should be available.
+     * Controls are hidden only when userProfile is explicitly 'System Administrator'
+     * (case-insensitive). When the profile key is missing we default to editable.
+     */
+    get canEditGlobally() {
+        const profile = this._readUserProfile();
+        if (!profile) return true;
+        return String(profile).trim().toLowerCase() !== ADMIN_PROFILE;
+        //return true;
+    }
+
+    _readUserProfile() {
+        const pick = (obj) => {
+            if (!obj || typeof obj !== 'object') return null;
+            for (const key of USER_PROFILE_FIELDS) {
+                const v = obj[key];
+                if (v !== undefined && v !== null && v !== '') return v;
+            }
+            return null;
+        };
+        return pick(this.omniJsonData) || pick(this._formData);
     }
 
     /**
@@ -328,6 +369,7 @@ export default class IntakeFormReviewSummary extends LightningElement {
             ? sectionLabels._sectionTitle
             : this.formatSectionTitle(sectionKey);
 
+        const isEditing = this._editingSections.has(sectionKey);
         const section = {
             id: sectionKey,
             title: sectionTitle,
@@ -335,8 +377,14 @@ export default class IntakeFormReviewSummary extends LightningElement {
             isExpanded: true,
             chevronIcon: 'utility:chevrondown',
             blocks: [],
-            fields: []
+            fields: [],
+            isSynthetic: false,
+            isEditable: true,
+            isEditing: isEditing,
+            showActions: this.canEditGlobally
         };
+
+        const parentPath = [sectionKey];
 
         // Iterate over sectionLabels keys in _order (ascending) for correct display order
         const keysToProcess = sectionLabels ? this.getOrderedKeys(sectionLabels) : [];
@@ -353,15 +401,15 @@ export default class IntakeFormReviewSummary extends LightningElement {
 
             if (Array.isArray(value)) {
                 // It's an array - process as repeatable block (needs _blockTitle or field labels)
-                const arrayBlock = this.processArray(key, value, labelInfo);
+                const arrayBlock = this.processArray(key, value, labelInfo, parentPath);
                 if (arrayBlock) {
                     section.blocks.push(arrayBlock);
                 }
             } else if (this.isObject(value)) {
-                const block = this.processBlock(key, value, labelInfo);
+                const block = this.processBlock(key, value, labelInfo, parentPath);
                 if (block) {
                     if (block.isAddressBlock) {
-                        const addressField = this.makeAddressField(key, block.title, block.fullAddressValue, labelInfo);
+                        const addressField = this.makeAddressField(key, block.title, block.fullAddressValue, labelInfo, parentPath, block.addressSubFields);
                         section.fields.push(addressField);
                     } else {
                         section.blocks.push(block);
@@ -372,7 +420,7 @@ export default class IntakeFormReviewSummary extends LightningElement {
                 const isValidLabel = typeof labelInfo === 'string' ||
                     (typeof labelInfo === 'object' && labelInfo.label);
                 if (isValidLabel) {
-                    const field = this.processField(key, value, labelInfo);
+                    const field = this.processField(key, value, labelInfo, parentPath);
                     if (field && (!this.hideEmptyFields || field.displayValue !== '—')) {
                         section.fields.push(field);
                     }
@@ -393,13 +441,14 @@ export default class IntakeFormReviewSummary extends LightningElement {
      * Only includes fields that have labels defined in blockLabels
      * IMPORTANT: Iterates over blockLabels keys to preserve JSON order
      */
-    processBlock(blockKey, blockData, blockLabels) {
+    processBlock(blockKey, blockData, blockLabels, parentPath = []) {
         // Block must have labels defined (either _blockTitle or field labels)
         if (!blockLabels || typeof blockLabels !== 'object') {
             return null;
         }
 
         const blockTitle = this.formatBlockTitle(blockKey, blockLabels);
+        const blockPath = [...parentPath, blockKey];
         const block = {
             id: blockKey,
             title: blockTitle,
@@ -421,11 +470,11 @@ export default class IntakeFormReviewSummary extends LightningElement {
 
             if (this.isObject(value) && !Array.isArray(value)) {
                 if (typeof labelInfo === 'object') {
-                    const nestedBlock = this.processBlock(key, value, labelInfo);
+                    const nestedBlock = this.processBlock(key, value, labelInfo, blockPath);
                     if (nestedBlock) {
                         if (nestedBlock.isAddressBlock) {
                             // Show address as a normal field in the grid (half width unless _addressColspan in label JSON)
-                            const addressField = this.makeAddressField(key, nestedBlock.title, nestedBlock.fullAddressValue, labelInfo);
+                            const addressField = this.makeAddressField(key, nestedBlock.title, nestedBlock.fullAddressValue, labelInfo, blockPath, nestedBlock.addressSubFields);
                             block.fields.push(addressField);
                             block.content.push({
                                 type: 'field',
@@ -450,7 +499,7 @@ export default class IntakeFormReviewSummary extends LightningElement {
                 const isValidLabel = typeof labelInfo === 'string' ||
                     (typeof labelInfo === 'object' && labelInfo.label);
                 if (isValidLabel) {
-                    const field = this.processField(key, value, labelInfo);
+                    const field = this.processField(key, value, labelInfo, blockPath);
                     if (field && (!this.hideEmptyFields || field.displayValue !== '—')) {
                         block.fields.push(field);
                         block.content.push({
@@ -465,9 +514,11 @@ export default class IntakeFormReviewSummary extends LightningElement {
             }
         }
 
-        // Address blocks: keep only Full Address value; show as "Applicant Address" + value (no "Full Address" label)
+        // Address blocks: keep only Full Address value for read-only render, but carry all sub-fields for edit mode.
         if (this.isAddressBlock(blockKey, blockLabels)) {
             const fullAddressField = block.fields.find(f => f.label === 'Full Address');
+            // Preserve all non-"Full Address" sub-fields so edit mode can expose them as inputs
+            block.addressSubFields = block.fields.filter(f => f.label !== 'Full Address');
             if (fullAddressField) {
                 block.fields = [fullAddressField];
                 block.isAddressBlock = true;
@@ -497,22 +548,32 @@ export default class IntakeFormReviewSummary extends LightningElement {
      * @description Create a field-shaped object for address so it renders in the grid like other fields.
      * Uses half width (colspan 6) by default unless overridden via label JSON _addressColspan.
      */
-    makeAddressField(key, label, displayValue, blockLabels) {
+    makeAddressField(key, label, displayValue, blockLabels, parentPath = [], subFields = []) {
         const colspan = (blockLabels && typeof blockLabels._addressColspan === 'number')
             ? Math.min(Math.max(blockLabels._addressColspan, 1), 12)
             : 6;
+        const path = [...parentPath, key];
         return {
             id: key,
             key: key,
             label: label,
             value: displayValue,
             displayValue: displayValue || '—',
-            fieldType: 'text',
+            fieldType: 'address',
             isBoolean: false,
             isMultiSelect: false,
             displayValues: [],
             colspan: colspan,
-            spanClass: `field-item span-${colspan}`
+            spanClass: `field-item span-${colspan}`,
+            // Edit-mode metadata
+            isAddressField: true,
+            addressSubFields: Array.isArray(subFields) ? subFields : [],
+            path: path,
+            pathJson: JSON.stringify(path),
+            // Non-editable wrapper field (sub-fields drive individual inputs in edit mode)
+            inputType: 'text',
+            isCheckbox: false,
+            rawValue: displayValue
         };
     }
 
@@ -521,74 +582,86 @@ export default class IntakeFormReviewSummary extends LightningElement {
      * Only includes fields that have labels defined
      * IMPORTANT: Iterates over itemLabels keys to preserve JSON order
      */
-    processArray(arrayKey, arrayData, arrayLabels) {
-        if (!arrayData || arrayData.length === 0 || !arrayLabels) {
-            return null;
-        }
+    processArray(arrayKey, arrayData, arrayLabels, parentPath = []) {
+        if (!arrayLabels) return null;
 
         // Get item labels - supports both object format and array format
         const itemLabels = typeof arrayLabels === 'object' && !Array.isArray(arrayLabels)
             ? arrayLabels
             : (Array.isArray(arrayLabels) && arrayLabels.length > 0 ? arrayLabels[0] : null);
 
-        if (!itemLabels) {
-            return null;
-        }
+        if (!itemLabels) return null;
 
+        const arrayPath = [...parentPath, arrayKey];
         const block = {
             id: arrayKey,
             title: (itemLabels && itemLabels._blockTitle) || this.formatBlockTitle(arrayKey, itemLabels),
             isBlock: true,
             isArray: true,
             items: [],
-            columns: []
+            columns: [],
+            arrayPath: arrayPath,
+            arrayPathJson: JSON.stringify(arrayPath),
+            // Keys used when adding a new empty row
+            rowSchemaKeys: this.getKeysInDocumentOrder(itemLabels),
+            rowSchemaJson: JSON.stringify(this.getKeysInDocumentOrder(itemLabels))
         };
 
         // Get label keys in document order (same as label JSON) for column/field order
-        const labelKeys = this.getKeysInDocumentOrder(itemLabels);
+        const labelKeys = block.rowSchemaKeys;
+
+        // Build columns once from labels so headers render even when array is empty (edit mode).
+        for (const key of labelKeys) {
+            const labelInfo = itemLabels[key];
+            const isValidLabel = typeof labelInfo === 'string' ||
+                (typeof labelInfo === 'object' && labelInfo.label);
+            if (!isValidLabel) continue;
+            const label = typeof labelInfo === 'string' ? labelInfo : labelInfo.label;
+            block.columns.push({ label, fieldName: key });
+        }
+
+        const rows = Array.isArray(arrayData) ? arrayData : [];
 
         // Process each item in the array
-        arrayData.forEach((item, index) => {
+        rows.forEach((item, index) => {
+            const rowPath = [...arrayPath, index];
             const processedItem = {
                 id: `${arrayKey}_${index}`,
                 index: index + 1,
+                rowIndex: index,
+                rowPath: rowPath,
+                rowPathJson: JSON.stringify(rowPath),
                 fields: []
             };
 
             // Iterate over itemLabels keys to preserve the order defined in JSON
             for (const key of labelKeys) {
-                const value = item[key];
                 const labelInfo = itemLabels[key];
-
-                // Skip if no corresponding data exists
-                if (value === undefined) continue;
 
                 // Only include fields with valid labels (string or object with label)
                 const isValidLabel = typeof labelInfo === 'string' ||
                     (typeof labelInfo === 'object' && labelInfo.label);
                 if (!isValidLabel) continue;
 
-                const field = this.processField(key, value, labelInfo);
+                const rawValue = item != null && typeof item === 'object' ? item[key] : undefined;
+                // For display, undefined renders as em-dash via processField. Keep undefined for edit binding.
+                const value = rawValue === undefined ? '' : rawValue;
+                const field = this.processField(key, value, labelInfo, rowPath);
 
                 if (field && (!this.hideEmptyFields || field.displayValue !== '—')) {
                     processedItem.fields.push(field);
-
-                    // Add to columns for table header (only once)
-                    if (index === 0) {
-                        block.columns.push({
-                            label: field.label,
-                            fieldName: key
-                        });
-                    }
                 }
             }
 
-            if (processedItem.fields.length > 0) {
-                block.items.push(processedItem);
-            }
+            // Always push the row so array rows remain navigable in edit mode even if all
+            // fields are blank. Read-only mode will still only render when row has fields.
+            processedItem.hasFields = processedItem.fields.length > 0;
+            block.items.push(processedItem);
         });
 
-        return block.items.length > 0 ? block : null;
+        // In read-only mode, suppress the block when there are no items.
+        block.isEmpty = block.items.length === 0;
+        return block;
     }
 
     /**
@@ -599,7 +672,7 @@ export default class IntakeFormReviewSummary extends LightningElement {
      *   - String: "Label Text" (auto-detect type)
      *   - Object: { "label": "Label Text", "type": "phone|email|currency|date|boolean|number", "colspan": 1-12 }
      */
-    processField(key, value, labelInfo) {
+    processField(key, value, labelInfo, parentPath = []) {
         // Label is required - if not provided, don't show the field
         if (!labelInfo) {
             return null;
@@ -635,6 +708,13 @@ export default class IntakeFormReviewSummary extends LightningElement {
             ? rawString.split(';').map(s => s.trim()).filter(Boolean).map((s, i) => ({ id: `${key}_${i}`, value: s }))
             : [];
 
+        // Edit-mode metadata
+        const path = [...parentPath, key];
+        const inputType = this._inputTypeFor(fieldType);
+        const formatter = fieldType === 'currency' ? 'currency' : undefined;
+        // lightning-input expects `value` for most types and `checked` for checkbox.
+        const booleanChecked = isBoolean ? this._coerceBoolean(value) : false;
+
         return {
             id: key,
             key: key,
@@ -656,8 +736,40 @@ export default class IntakeFormReviewSummary extends LightningElement {
             booleanIconClass: isBoolean ? (value ? 'icon-success' : 'icon-error') : '',
             // Colspan for 12-column grid layout
             colspan: colspan,
-            spanClass: `field-item span-${colspan}`
+            spanClass: `field-item span-${colspan}`,
+            // Edit-mode metadata (consumed by the template when section.isEditing)
+            path: path,
+            pathJson: JSON.stringify(path),
+            inputType: inputType,
+            isCheckbox: isBoolean,
+            formatter: formatter,
+            rawValue: value == null ? '' : value,
+            booleanChecked: booleanChecked,
+            // Multi-select is read-only in edit mode (v1)
+            isEditableField: !isMultiSelect
         };
+    }
+
+    /**
+     * @description Map a detected/explicit field type to a lightning-input `type`.
+     */
+    _inputTypeFor(fieldType) {
+        switch (fieldType) {
+            case 'email': return 'email';
+            case 'phone': return 'tel';
+            case 'number': return 'number';
+            case 'currency': return 'number';
+            case 'date': return 'date';
+            case 'boolean': return 'checkbox';
+            default: return 'text';
+        }
+    }
+
+    _coerceBoolean(value) {
+        if (typeof value === 'boolean') return value;
+        if (value == null) return false;
+        const s = String(value).trim().toLowerCase();
+        return s === 'true' || s === 'yes' || s === '1';
     }
 
     /**
@@ -980,5 +1092,227 @@ export default class IntakeFormReviewSummary extends LightningElement {
      */
     getChevronIcon(isExpanded) {
         return isExpanded ? 'utility:chevrondown' : 'utility:chevronright';
+    }
+
+    // ============================ Edit Mode Handlers ============================
+
+    /**
+     * @description Prevent clicks on Edit/Save/Cancel buttons from toggling the
+     * section collapse (the whole header is a button with onclick={handleSectionToggle}).
+     */
+    handleActionClick(event) {
+        event.stopPropagation();
+    }
+
+    handleEditSection(event) {
+        event.stopPropagation();
+        const sectionId = event.currentTarget.dataset.sectionId;
+        if (!sectionId) return;
+        // Deep clone the current section slice so edits are isolated until Save.
+        const current = this._formData ? this._formData[sectionId] : null;
+        this._drafts[sectionId] = this._deepClone(current && typeof current === 'object' ? current : {});
+        this._editingSections.add(sectionId);
+        this.processFormData();
+    }
+
+    handleCancelSection(event) {
+        event.stopPropagation();
+        const sectionId = event.currentTarget.dataset.sectionId;
+        if (!sectionId) return;
+        this._editingSections.delete(sectionId);
+        delete this._drafts[sectionId];
+        this.processFormData();
+    }
+
+    handleSaveSection(event) {
+        event.stopPropagation();
+        const sectionId = event.currentTarget.dataset.sectionId;
+        if (!sectionId) return;
+
+        const draft = this._drafts[sectionId];
+        const committed = draft === undefined ? {} : draft;
+
+        // Update local _formData so the UI immediately reflects the saved state.
+        this._formData = { ...(this._formData || {}), [sectionId]: committed };
+
+        // Persist back to OmniScript's data JSON.
+        // Pass the FULL merged root (not just the delta) because OmniScript's
+        // omniUpdateDataJson performs a shallow top-level replace — passing only
+        // { [sectionId]: ... } would wipe sibling sections in some runtimes.
+        // We also call omniApplyCallResp so the stepper / prior steps stay in sync.
+        const root = this.omniJsonData;
+        const payload = (root && typeof root === 'object' && !Array.isArray(root))
+            ? { ...root, [sectionId]: committed }
+            : { [sectionId]: committed };
+
+        let dispatched = false;
+        if (typeof this.omniApplyCallResp === 'function') {
+            this.omniApplyCallResp(payload);
+            dispatched = true;
+        }
+        if (typeof this.omniUpdateDataJson === 'function') {
+            this.omniUpdateDataJson(payload);
+            dispatched = true;
+        }
+        if (!dispatched) {
+            // Fallback for environments without the mixin wired up.
+            this.dispatchEvent(new CustomEvent('omniupdatedatajson', {
+                detail: payload,
+                bubbles: true,
+                composed: true
+            }));
+        }
+
+        this._editingSections.delete(sectionId);
+        delete this._drafts[sectionId];
+        this.processFormData();
+    }
+
+    /**
+     * @description Write user input into the draft for the owning section.
+     * Triggered by lightning-input onchange. We avoid calling processFormData here
+     * so the input retains focus between keystrokes.
+     */
+    handleFieldChange(event) {
+        const pathJson = event.currentTarget.dataset.path;
+        const fieldType = event.currentTarget.dataset.type;
+        if (!pathJson) return;
+        let path;
+        try {
+            path = JSON.parse(pathJson);
+        } catch (e) {
+            return;
+        }
+        if (!Array.isArray(path) || path.length < 2) return;
+
+        const sectionId = path[0];
+        if (!this._editingSections.has(sectionId)) return;
+
+        const detail = event.detail || {};
+        let value;
+        if (fieldType === 'boolean') {
+            value = detail.checked === true;
+        } else if (fieldType === 'number' || fieldType === 'currency') {
+            // lightning-input emits strings; coerce to number when non-empty.
+            const raw = detail.value;
+            value = raw === '' || raw == null ? null : Number(raw);
+            if (Number.isNaN(value)) value = raw; // preserve user-visible text if not numeric
+        } else {
+            value = detail.value == null ? '' : detail.value;
+        }
+
+        if (!this._drafts[sectionId] || typeof this._drafts[sectionId] !== 'object') {
+            this._drafts[sectionId] = {};
+        }
+        this._setAtPath(this._drafts[sectionId], path.slice(1), value);
+    }
+
+    handleAddRow(event) {
+        event.stopPropagation();
+        const arrayPathJson = event.currentTarget.dataset.arrayPath;
+        const schemaJson = event.currentTarget.dataset.rowSchema;
+        if (!arrayPathJson) return;
+        let arrayPath;
+        let schemaKeys = [];
+        try {
+            arrayPath = JSON.parse(arrayPathJson);
+            if (schemaJson) schemaKeys = JSON.parse(schemaJson);
+        } catch (e) {
+            return;
+        }
+        if (!Array.isArray(arrayPath) || arrayPath.length < 2) return;
+        const sectionId = arrayPath[0];
+        if (!this._editingSections.has(sectionId)) return;
+
+        if (!this._drafts[sectionId] || typeof this._drafts[sectionId] !== 'object') {
+            this._drafts[sectionId] = {};
+        }
+        const existing = this._getAtPath(this._drafts[sectionId], arrayPath.slice(1));
+        const list = Array.isArray(existing) ? existing.slice() : [];
+        list.push(this._buildEmptyRow(schemaKeys, list[0]));
+        this._setAtPath(this._drafts[sectionId], arrayPath.slice(1), list);
+        this.processFormData();
+    }
+
+    handleDeleteRow(event) {
+        event.stopPropagation();
+        const arrayPathJson = event.currentTarget.dataset.arrayPath;
+        const rowIndexStr = event.currentTarget.dataset.rowIndex;
+        if (!arrayPathJson || rowIndexStr == null) return;
+        let arrayPath;
+        try {
+            arrayPath = JSON.parse(arrayPathJson);
+        } catch (e) {
+            return;
+        }
+        const rowIndex = Number(rowIndexStr);
+        if (!Array.isArray(arrayPath) || arrayPath.length < 2 || Number.isNaN(rowIndex)) return;
+
+        const sectionId = arrayPath[0];
+        if (!this._editingSections.has(sectionId)) return;
+
+        const existing = this._getAtPath(this._drafts[sectionId] || {}, arrayPath.slice(1));
+        if (!Array.isArray(existing)) return;
+        const list = existing.slice();
+        if (rowIndex < 0 || rowIndex >= list.length) return;
+        list.splice(rowIndex, 1);
+        this._setAtPath(this._drafts[sectionId], arrayPath.slice(1), list);
+        this.processFormData();
+    }
+
+    // ============================ Path / Clone helpers ============================
+
+    _deepClone(obj) {
+        if (obj == null) return obj;
+        try {
+            return JSON.parse(JSON.stringify(obj));
+        } catch (e) {
+            return obj;
+        }
+    }
+
+    _getAtPath(root, path) {
+        let cur = root;
+        for (const seg of path) {
+            if (cur == null) return undefined;
+            cur = cur[seg];
+        }
+        return cur;
+    }
+
+    _setAtPath(root, path, value) {
+        if (!path || path.length === 0) return;
+        let cur = root;
+        for (let i = 0; i < path.length - 1; i++) {
+            const seg = path[i];
+            const nextSeg = path[i + 1];
+            const needsArray = typeof nextSeg === 'number';
+            if (cur[seg] == null || typeof cur[seg] !== 'object') {
+                cur[seg] = needsArray ? [] : {};
+            }
+            cur = cur[seg];
+        }
+        cur[path[path.length - 1]] = value;
+    }
+
+    _buildEmptyRow(schemaKeys, template) {
+        const row = {};
+        if (template && typeof template === 'object') {
+            // Preserve shape/keys; reset scalar values to empty, arrays/objects to empty copies.
+            for (const k of Object.keys(template)) {
+                const v = template[k];
+                if (Array.isArray(v)) row[k] = [];
+                else if (v && typeof v === 'object') row[k] = {};
+                else if (typeof v === 'boolean') row[k] = false;
+                else if (typeof v === 'number') row[k] = null;
+                else row[k] = '';
+            }
+        }
+        if (Array.isArray(schemaKeys)) {
+            for (const k of schemaKeys) {
+                if (!(k in row)) row[k] = '';
+            }
+        }
+        return row;
     }
 }
