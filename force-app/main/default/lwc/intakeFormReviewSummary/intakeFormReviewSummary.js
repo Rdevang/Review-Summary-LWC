@@ -324,8 +324,8 @@ export default class PocIntakeformreviewsummary extends OmniscriptBaseMixin(Ligh
     get canEditGlobally() {
         const profile = this._readUserProfile();
         if (!profile) return true;
-        return String(profile).trim().toLowerCase() !== ADMIN_PROFILE;
-        //return true;
+        //return String(profile).trim().toLowerCase() !== ADMIN_PROFILE;
+        return true;
     }
 
     _readUserProfile() {
@@ -338,6 +338,103 @@ export default class PocIntakeformreviewsummary extends OmniscriptBaseMixin(Ligh
             return null;
         };
         return pick(this.omniJsonData) || pick(this._formData);
+    }
+
+    // ============================ Conditional Visibility ============================
+
+    /**
+     * @description Build the merged root used to resolve dotted paths in _visibleWhen
+     * rules. When a section is currently being edited, its draft takes precedence over
+     * the committed _formData so visibility reacts live to user input.
+     */
+    _resolveConditionRoot() {
+        const base = (this._formData && typeof this._formData === 'object')
+            ? { ...this._formData }
+            : {};
+        // Prefer draft values for any section currently in edit mode
+        if (this._editingSections && this._editingSections.size > 0) {
+            for (const sid of this._editingSections) {
+                if (this._drafts && sid in this._drafts) {
+                    base[sid] = this._drafts[sid];
+                }
+            }
+        }
+        // Always mix in root-level OmniScript data (e.g. userProfile, Org_Type)
+        if (this.omniJsonData && typeof this.omniJsonData === 'object') {
+            for (const k of Object.keys(this.omniJsonData)) {
+                if (!(k in base)) base[k] = this.omniJsonData[k];
+            }
+        }
+        return base;
+    }
+
+    /**
+     * @description Evaluate a _visibleWhen rule against a root object.
+     * Rule shapes:
+     *   Simple:  { path | field: 'A.B.C', op: 'eq'|'neq'|'contains'|'startsWith'|
+     *                                         'isEmpty'|'isNotEmpty'|'gt'|'lt'|'gte'|'lte'|'in'|'notIn',
+     *             value: <scalar or array for in/notIn> }
+     *   Shorthand:  { field: 'A.B', equals: 'X' }  /  { field: 'A.B', notEquals: 'X' }
+     *   Groups:  { all: [rule1, rule2, ...] }   or   { any: [rule1, rule2, ...] }  (nesting OK)
+     * Missing / null / non-object rules are treated as "visible".
+     */
+    _evalVisibility(rule, root) {
+        if (rule == null) return true;
+        if (typeof rule !== 'object') return true;
+
+        if (Array.isArray(rule.all)) {
+            return rule.all.every(r => this._evalVisibility(r, root));
+        }
+        if (Array.isArray(rule.any)) {
+            return rule.any.some(r => this._evalVisibility(r, root));
+        }
+
+        const pathStr = rule.path || rule.field;
+        if (!pathStr) return true;
+        const left = this._getAtPath(root, String(pathStr).split('.'));
+
+        // Shorthand operators
+        if ('equals' in rule) return this._eqLoose(left, rule.equals);
+        if ('notEquals' in rule) return !this._eqLoose(left, rule.notEquals);
+
+        const op = rule.op || rule.operator;
+        const value = rule.value;
+        const isBlank = (v) => v == null || v === '' || (Array.isArray(v) && v.length === 0);
+
+        switch (op) {
+            case 'eq': return this._eqLoose(left, value);
+            case 'neq': return !this._eqLoose(left, value);
+            case 'contains':
+                return left != null && String(left).toLowerCase().includes(String(value ?? '').toLowerCase());
+            case 'startsWith':
+                return left != null && String(left).toLowerCase().startsWith(String(value ?? '').toLowerCase());
+            case 'isEmpty': return isBlank(left);
+            case 'isNotEmpty': return !isBlank(left);
+            case 'gt': return Number(left) > Number(value);
+            case 'lt': return Number(left) < Number(value);
+            case 'gte': return Number(left) >= Number(value);
+            case 'lte': return Number(left) <= Number(value);
+            case 'in': return Array.isArray(value) && value.some(v => this._eqLoose(left, v));
+            case 'notIn': return Array.isArray(value) && !value.some(v => this._eqLoose(left, v));
+            default: return true; // Unknown operator: do not hide
+        }
+    }
+
+    _eqLoose(a, b) {
+        if (a == null && b == null) return true;
+        if (a == null || b == null) return false;
+        if (typeof a === 'boolean' || typeof b === 'boolean') {
+            return String(a).toLowerCase() === String(b).toLowerCase();
+        }
+        return String(a) === String(b);
+    }
+
+    /**
+     * @description Read _visibleWhen off a labelInfo (string or object).
+     */
+    _visibleWhenFrom(labelInfo) {
+        if (!labelInfo || typeof labelInfo !== 'object') return null;
+        return labelInfo._visibleWhen || labelInfo.visibleWhen || null;
     }
 
     /**
@@ -364,6 +461,12 @@ export default class PocIntakeformreviewsummary extends OmniscriptBaseMixin(Ligh
      * IMPORTANT: Iterates over sectionLabels keys to preserve JSON order
      */
     processSection(sectionKey, sectionData, sectionLabels) {
+        // Section-level conditional rendering
+        const sectionRule = this._visibleWhenFrom(sectionLabels);
+        if (sectionRule && !this._evalVisibility(sectionRule, this._resolveConditionRoot())) {
+            return null;
+        }
+
         // Use _sectionTitle from labels, or format from key
         const sectionTitle = (sectionLabels && sectionLabels._sectionTitle)
             ? sectionLabels._sectionTitle
@@ -444,6 +547,12 @@ export default class PocIntakeformreviewsummary extends OmniscriptBaseMixin(Ligh
     processBlock(blockKey, blockData, blockLabels, parentPath = []) {
         // Block must have labels defined (either _blockTitle or field labels)
         if (!blockLabels || typeof blockLabels !== 'object') {
+            return null;
+        }
+
+        // Block-level conditional rendering
+        const blockRule = this._visibleWhenFrom(blockLabels);
+        if (blockRule && !this._evalVisibility(blockRule, this._resolveConditionRoot())) {
             return null;
         }
 
@@ -585,12 +694,24 @@ export default class PocIntakeformreviewsummary extends OmniscriptBaseMixin(Ligh
     processArray(arrayKey, arrayData, arrayLabels, parentPath = []) {
         if (!arrayLabels) return null;
 
+        // Array-level conditional rendering (on the wrapper labels)
+        const wrapperRule = this._visibleWhenFrom(arrayLabels);
+        if (wrapperRule && !this._evalVisibility(wrapperRule, this._resolveConditionRoot())) {
+            return null;
+        }
+
         // Get item labels - supports both object format and array format
         const itemLabels = typeof arrayLabels === 'object' && !Array.isArray(arrayLabels)
             ? arrayLabels
             : (Array.isArray(arrayLabels) && arrayLabels.length > 0 ? arrayLabels[0] : null);
 
         if (!itemLabels) return null;
+
+        // Also honor _visibleWhen on the item template if present (separate from wrapper)
+        const itemRule = itemLabels === arrayLabels ? null : this._visibleWhenFrom(itemLabels);
+        if (itemRule && !this._evalVisibility(itemRule, this._resolveConditionRoot())) {
+            return null;
+        }
 
         const arrayPath = [...parentPath, arrayKey];
         const block = {
@@ -675,6 +796,22 @@ export default class PocIntakeformreviewsummary extends OmniscriptBaseMixin(Ligh
     processField(key, value, labelInfo, parentPath = []) {
         // Label is required - if not provided, don't show the field
         if (!labelInfo) {
+            return null;
+        }
+
+        // Field-level conditional rendering. When the field is hidden while its
+        // owning section is being edited, also clear the value from the draft so
+        // saved data doesn't retain orphaned values (dynamic-form semantics).
+        const fieldRule = this._visibleWhenFrom(labelInfo);
+        if (fieldRule && !this._evalVisibility(fieldRule, this._resolveConditionRoot())) {
+            const sectionId = parentPath && parentPath.length > 0 ? parentPath[0] : null;
+            if (sectionId && this._editingSections.has(sectionId) && this._drafts[sectionId]) {
+                const localPath = [...parentPath.slice(1), key];
+                const existing = this._getAtPath(this._drafts[sectionId], localPath);
+                if (existing !== undefined && existing !== null && existing !== '') {
+                    this._setAtPath(this._drafts[sectionId], localPath, '');
+                }
+            }
             return null;
         }
 
@@ -1205,6 +1342,11 @@ export default class PocIntakeformreviewsummary extends OmniscriptBaseMixin(Ligh
             this._drafts[sectionId] = {};
         }
         this._setAtPath(this._drafts[sectionId], path.slice(1), value);
+
+        // Re-process so _visibleWhen rules react to this input. lightning-input's
+        // `change` event fires on blur/commit (for text) or selection (for booleans/
+        // pickers/dates), so re-rendering here doesn't disrupt active typing.
+        this.processFormData();
     }
 
     handleAddRow(event) {

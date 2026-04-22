@@ -17,6 +17,7 @@ A reusable Salesforce Lightning Web Component that dynamically renders a review 
 * [Step\-by\-Step Setup Guide](#step-by-step-setup-guide)
 * [OmniScript Set Values](#omniscript-set-values-elementvaluemap)
 * [Label Data Format](#label-data-format)
+* [Conditional visibility (_visibleWhen)](#conditional-visibility-_visiblewhen)
 * [API Reference](#api-reference)
 * [Deployment](#deployment)
 * [Troubleshooting](#troubleshooting)
@@ -32,6 +33,7 @@ A reusable Salesforce Lightning Web Component that dynamically renders a review 
 * **Dual Context Support**: Works both as OmniStudio Custom LWC and standalone on Record Pages
 * **Collapsible Sections**: Expandable/collapsible sections with keyboard accessibility
 * **Array Tables**: Renders repeatable blocks as accessible data tables
+* **Conditional visibility**: Label rules via **`_visibleWhen`** / **`visibleWhen`** on sections, blocks, arrays, and fields; edit mode clears hidden field values from the draft
 * **WCAG 2.1 AA Compliant**: Built with accessibility standards in mind
 
 ### Related Components
@@ -592,6 +594,7 @@ colspan: 3 (quarter width)
 | `label` | Field | Yes (if object) | Display label when using type/colspan |
 | `type` | Field | No | Format type: phone, email, currency, date, boolean, number, multiselect |
 | `colspan` | Field | No | Grid column span (1\-12), default 6 (half width) |
+| `_visibleWhen` or `visibleWhen` | Section, block, array wrapper, array item template, field | No | If the rule evaluates to **false**, the item is not rendered. In **edit** mode, hidden field values are removed from the **draft** so they are not saved. See [Conditional visibility](#conditional-visibility-_visiblewhen). |
 
 ### Address blocks
 
@@ -600,6 +603,121 @@ Blocks whose key or `_blockTitle` contains "address" are treated as address bloc
 ### Multi\-select (pills)
 
 Fields with `type: "multiselect"` or string values containing a semicolon are rendered as pills/tags (one per value). Useful for multi-picklist or comma/semicolon-separated lists.
+
+### Conditional visibility (`_visibleWhen`)
+
+#### Rule shapes
+
+Any **section**, **block**, **array** wrapper, **array item** label template, or **field** label object can carry **`_visibleWhen`** or **`visibleWhen`**. If the rule evaluates to **false**, that item is **not rendered**. In **edit** mode, a hidden field’s value is **cleared** from the **draft** (so **Save** does not persist it). If the item is shown again later, a field starts **empty** until the user enters a value.
+
+#### Where rules live
+
+| Level | Key goes on |
+|:------|:------------|
+| **Section** | The section’s top-level label object (same object that can carry **`_sectionTitle`**) |
+| **Block** | The block’s label object (same one that holds **`_blockTitle`**) |
+| **Array wrapper** | The array’s label object (hides the entire block) |
+| **Array item template** | Inside the item template labels (also hides the entire block) |
+| **Field** | The field’s label object |
+
+#### Paths
+
+**`path`** (or **`field`**) is a **dotted path** resolved against a **merged root**, in this order:
+
+1. **Draft** (takes precedence for any section currently in **edit** mode)
+2. **Committed** `_formData`
+3. **`omniJsonData`**
+
+You can reference nested keys (e.g. `Applicant.Address.Country`), top-level **`Org_Type`**, **`userProfile`**, etc.
+
+#### Simple comparisons
+
+**Explicit:**
+
+```json
+{
+  "label": "Business Number",
+  "type": "text",
+  "_visibleWhen": { "path": "Applicant.Type", "op": "eq", "value": "Corporation" }
+}
+```
+
+**Shorthand (common case):**
+
+```json
+{
+  "label": "Spouse Name",
+  "_visibleWhen": { "field": "MaritalStatus", "equals": "Married" }
+}
+```
+
+**Non-empty controller:**
+
+```json
+{ "_visibleWhen": { "path": "Applicant.MailingAddress", "op": "isNotEmpty" } }
+```
+
+#### Groups (AND / OR, nestable)
+
+```json
+{
+  "_visibleWhen": {
+    "all": [
+      { "path": "Applicant.Country", "op": "eq", "value": "Canada" },
+      { "any": [
+          { "path": "Applicant.Province", "op": "in", "value": ["AB", "BC"] },
+          { "path": "Applicant.Type", "op": "eq", "value": "Partnership" }
+      ] }
+    ]
+  }
+}
+```
+
+#### Supported operators
+
+| Operator / key | Meaning |
+|:----------------|:--------|
+| **`eq` / `neq`** | Equals / not equals (loose, boolean-aware) |
+| **`equals` / `notEquals`** | Shorthand keys (same idea as eq / neq) |
+| **`contains` / `startsWith`** | Case-insensitive substring match |
+| **`isEmpty` / `isNotEmpty`** | `null`, empty string, or empty array |
+| **`gt` / `lt` / `gte` / `lte`** | Numeric comparison |
+| **`in` / `notIn`** | Value membership in an array |
+| **`all` / `any`** | Nestable group combinators (AND / OR) |
+
+#### Reactive behavior (edit mode)
+
+* In edit mode, **lightning-input** change events trigger a **re-process** so conditions re-evaluate **without** a Save round-trip.
+* For **text** inputs this often fires on **blur**; for **checkboxes**, **dates**, and **pickers**, on **commit**. **Focus** is preserved because the **DOM** tree is stable.
+* When a **controller** changes and a controlled field **becomes** hidden, its value is **cleared** from the draft on the **same** render pass. **Re-showing** it later starts it **blank** until the user types.
+
+#### Example: end-to-end — label JSON for an Applicant section
+
+```json
+{
+  "Applicant": {
+    "_sectionTitle": "Applicant Information",
+    "_order": 1,
+    "Type": { "label": "Applicant Type", "type": "text" },
+    "IncorporationNumber": {
+      "label": "Incorporation Number",
+      "type": "text",
+      "_visibleWhen": { "field": "Applicant.Type", "equals": "Corporation" }
+    },
+    "DirectorDetails": {
+      "_blockTitle": "Director Details",
+      "_visibleWhen": { "path": "Applicant.Type", "op": "in", "value": ["Corporation", "Partnership"] },
+      "DirectorName": { "label": "Director Name", "type": "text" },
+      "DirectorEmail": { "label": "Director Email", "type": "email" }
+    }
+  },
+  "SoleProprietorDetails": {
+    "_sectionTitle": "Sole Proprietor",
+    "_visibleWhen": { "path": "Applicant.Type", "op": "eq", "value": "Sole Proprietor" },
+    "OwnerName": { "label": "Owner Name", "type": "text" }
+  }
+}
+```
 
 ---
 

@@ -9,6 +9,7 @@ Reusable Salesforce LWC that renders a review/summary view for intake forms in *
 * [OmniScript Set Values](#omniscript-set-values)
 * [Deployment](#deployment)
 * [Label JSON](#label-json)
+* [Conditional visibility (_visibleWhen)](#conditional-visibility-_visiblewhen)
 * [More Documentation](#more-documentation)
 
 ## Components
@@ -74,9 +75,124 @@ For a **GRANTS** flow, set **`Org_Type`** to **`GRANTS`** (and ensure **`recordI
 * Budget/Document sections are driven by **SECTION_CONFIG** in the LWC (`isVisible`, `order`); set `isVisible: true` to show them.
 * To generate label JSON from data JSON, use **[label-json-generation-prompt.md](label-json-generation-prompt.md)**.
 
+## Conditional visibility (`_visibleWhen`)
+
+### Rule shapes
+
+Any **section**, **block**, **array** wrapper, **array item** template, or **field** label object can carry **`_visibleWhen`** (or **`visibleWhen`**). If it evaluates to **false**, the item is **not rendered**. In **edit** mode, a hidden field’s value is **cleared** from the **draft** (so **Save** will not persist it).
+
+### Simple comparison
+
+```json
+{
+  "label": "Business Number",
+  "type": "text",
+  "_visibleWhen": { "path": "Applicant.Type", "op": "eq", "value": "Corporation" }
+}
+```
+
+### Shorthand (common case)
+
+```json
+{
+  "label": "Spouse Name",
+  "_visibleWhen": { "field": "MaritalStatus", "equals": "Married" }
+}
+```
+
+### Groups (AND / OR, nestable)
+
+```json
+{
+  "_visibleWhen": {
+    "all": [
+      { "path": "Applicant.Country", "op": "eq", "value": "Canada" },
+      { "any": [
+          { "path": "Applicant.Province", "op": "in", "value": ["AB", "BC"] },
+          { "path": "Applicant.Type", "op": "eq", "value": "Partnership" }
+      ] }
+    ]
+  }
+}
+```
+
+### Non-empty controller
+
+```json
+{ "_visibleWhen": { "path": "Applicant.MailingAddress", "op": "isNotEmpty" } }
+```
+
+### Supported operators
+
+| Operator | Meaning |
+|:---------|:--------|
+| `eq` / `neq` | equals / not equals (loose, boolean-aware) |
+| `equals` / `notEquals` | shorthand keys (same idea as eq / neq) |
+| `contains` / `startsWith` | case-insensitive substring match |
+| `isEmpty` / `isNotEmpty` | `null`, empty string, or empty array |
+| `gt` / `lt` / `gte` / `lte` | numeric comparison |
+| `in` / `notIn` | value membership in an array |
+| `all` / `any` | nestable group combinators (AND / OR) |
+
+### Where rules live
+
+| Level | Key goes on |
+|:------|:-------------|
+| **Section** | The section’s top-level label object (same object that can carry `_sectionTitle`) |
+| **Block** | The block’s label object (same one that holds `_blockTitle`) |
+| **Array wrapper** | The array’s label object (hides the entire block) |
+| **Array item template** | Inside the item template labels (also hides the entire block) |
+| **Field** | The field’s label object |
+
+### Paths
+
+`path` (or `field`) is a **dotted path** resolved against the **merged root**:
+
+* **Draft** takes precedence for any section currently in **edit** mode.
+* Then **committed** `_formData`, then **`omniJsonData`**.
+
+You can reference values such as `Applicant.Address.Country`, top-level `Org_Type`, `userProfile`, etc.
+
+### Reactive behavior (edit mode)
+
+* In edit mode, **lightning-input** change events trigger a **re-process** so conditions re-evaluate **without** a Save round-trip.
+* For **text** inputs this often fires on **blur**; for **checkboxes** / **dates** / **pickers**, on **commit**. **Focus** is preserved because the DOM tree stays stable.
+* When a **controller** changes and a controlled field **becomes hidden**, its value is **cleared** from the draft on that **same** render pass. **Re-showing** it later starts it **blank**.
+
+### Example: end-to-end — label JSON for an Applicant section
+
+```json
+{
+  "Applicant": {
+    "_sectionTitle": "Applicant Information",
+    "_order": 1,
+    "Type": { "label": "Applicant Type", "type": "text" },
+    "IncorporationNumber": {
+      "label": "Incorporation Number",
+      "type": "text",
+      "_visibleWhen": { "field": "Applicant.Type", "equals": "Corporation" }
+    },
+    "DirectorDetails": {
+      "_blockTitle": "Director Details",
+      "_visibleWhen": { "path": "Applicant.Type", "op": "in", "value": ["Corporation", "Partnership"] },
+      "DirectorName": { "label": "Director Name", "type": "text" },
+      "DirectorEmail": { "label": "Director Email", "type": "email" }
+    }
+  },
+  "SoleProprietorDetails": {
+    "_sectionTitle": "Sole Proprietor",
+    "_visibleWhen": { "path": "Applicant.Type", "op": "eq", "value": "Sole Proprietor" },
+    "OwnerName": { "label": "Owner Name", "type": "text" }
+  }
+}
+```
+
+**Longer walkthroughs:** [README-FULL.md](README-FULL.md#conditional-visibility-_visiblewhen) (same content, plus context with other label topics).
+
 ## More Documentation
 
-* **Full documentation (step-by-step setup, label format, API, troubleshooting):** [README-FULL.md](README-FULL.md).
+* **Full documentation (step-by-step setup, label format, conditional visibility, API, troubleshooting):** [README-FULL.md](README-FULL.md).
+* **Conditional visibility (`_visibleWhen`):** [README](README.md#conditional-visibility-_visiblewhen) · [Full reference](README-FULL.md#conditional-visibility-_visiblewhen)
 * **Section order:** Form sections use `_order` in labelData; Budget/Document order is in `SECTION_CONFIG` in `intakeFormReviewSummary.js` (e.g. 4.5, 4.6); all sections are sorted by numeric `order`.
 * **Generate label JSON from data:** Use [label-json-generation-prompt.md](label-json-generation-prompt.md) with Gemini/ChatGPT.
 * **API version:** 65.0.
